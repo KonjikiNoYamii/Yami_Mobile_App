@@ -1,20 +1,10 @@
-import React from 'react';
-import { SafeAreaView, ScrollView } from 'react-native';
-import { HeroSection } from './src/components/HeroSection';
-import { ProfileCard } from './src/components/ProfileCard';
-import { LoginForm } from './src/components/LoginForm';
+import React from 'react'
+import ScreeningList from './src/screen/ScreeningList'
 
-const App = () => {
+function App() {
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
-        <HeroSection />
-        <ProfileCard />
-        <LoginForm />
-      </ScrollView>
-    </SafeAreaView>
-    
-  );
-};
+    <ScreeningList />
+  )
+}
 
-export default App;
+export default App
