@@ -12,8 +12,9 @@ const App = () => {
         <ProfileCard />
         <LoginForm />
       </ScrollView>
+      
     </SafeAreaView>
-    
+
   );
 };
 
