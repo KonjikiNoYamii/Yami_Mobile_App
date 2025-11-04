@@ -15,9 +15,6 @@ export const SimpleFlatList: React.FC<Props> = ({ data, refreshing, onRefresh })
   const viewabilityConfig = { itemVisiblePercentThreshold: 50 };
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
     // minimal notification — tidak pakai alert agar elegan
-    if (viewableItems?.length) {
-      console.log('Visible:', viewableItems[0].item.title);
-    }
   }).current;
 
   return (
