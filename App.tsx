@@ -1,8 +1,9 @@
 import React from 'react'
+import FlexboxPlay from './src/screen/FlexBoxPlay'
 
 function App() {
   return (
-    <div>App</div>
+    <FlexboxPlay />
   )
 }
 
