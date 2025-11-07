@@ -8,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'react-native';
 import { Navbar } from './src/components/Navbar';
 
-export default function App() {
+const App =()  => {
   const { isDark, setIsDark, theme } = useTheme();
   const [screen, setScreen] = useState<'Home' | 'Products' | 'Add'>('Home');
   const [products, setProducts] = useState(initialProducts);
@@ -41,3 +41,4 @@ export default function App() {
     </SafeAreaView>
   );
 }
+export default App
