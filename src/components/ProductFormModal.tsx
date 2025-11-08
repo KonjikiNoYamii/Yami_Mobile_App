@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Modal, View, TextInput, Text, Button, StyleSheet, ScrollView } from 'react-native';
+import { Modal, View, TextInput, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
 
 interface ProductFormModalProps {
   visible: boolean;
@@ -12,34 +13,18 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ visible, onC
   const [price, setPrice] = useState('');
   const [image, setImage] = useState('');
   const [desc, setDesc] = useState('');
-  const [errors, setErrors] = useState({
-    name: '',
-    price: '',
-    image: ''
-  });
+  const [errors, setErrors] = useState({ name: '', price: '', image: '' });
+  const { isDark } = useTheme();
 
   const validate = () => {
     let valid = true;
     const newErrors = { name: '', price: '', image: '' };
 
-    if (!name) {
-      newErrors.name = 'Nama produk wajib diisi!';
-      valid = false;
-    }
-    if (!price) {
-      newErrors.price = 'Harga wajib diisi!';
-      valid = false;
-    } else if (isNaN(Number(price))) {
-      newErrors.price = 'Harga harus berupa angka!';
-      valid = false;
-    }
-    if (!image) {
-      newErrors.image = 'URL gambar wajib diisi!';
-      valid = false;
-    } else if (!image.startsWith('http')) {
-      newErrors.image = 'URL gambar tidak valid!';
-      valid = false;
-    }
+    if (!name) { newErrors.name = 'Nama produk wajib diisi!'; valid = false; }
+    if (!price) { newErrors.price = 'Harga wajib diisi!'; valid = false; }
+    else if (isNaN(Number(price))) { newErrors.price = 'Harga harus berupa angka!'; valid = false; }
+    if (!image) { newErrors.image = 'URL gambar wajib diisi!'; valid = false; }
+    else if (!image.startsWith('http')) { newErrors.image = 'URL gambar tidak valid!'; valid = false; }
 
     setErrors(newErrors);
     return valid;
@@ -54,16 +39,21 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ visible, onC
   };
 
   return (
-    <Modal visible={visible} animationType="slide">
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Tambah Produk</Text>
+    <Modal visible={visible} animationType="slide" transparent={false}>
+      <ScrollView contentContainerStyle={[styles.container, { backgroundColor: isDark ? '#1e1e1e' : '#fff' }]}>
+        <Text style={[styles.title, { color: isDark ? '#fff' : '#000' }]}>Tambah Produk</Text>
 
         <View style={styles.field}>
           <TextInput
             placeholder="Nama Produk"
+            placeholderTextColor={isDark ? '#aaa' : '#999'}
             value={name}
             onChangeText={text => { setName(text); if (errors.name) setErrors(prev => ({ ...prev, name: '' })); }}
-            style={[styles.input, errors.name ? styles.inputError : null]}
+            style={[
+              styles.input,
+              { backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5', color: isDark ? '#fff' : '#000' },
+              errors.name ? styles.inputError : null
+            ]}
           />
           {errors.name ? <Text style={styles.errorText}>{errors.name}</Text> : null}
         </View>
@@ -71,10 +61,15 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ visible, onC
         <View style={styles.field}>
           <TextInput
             placeholder="Harga"
+            placeholderTextColor={isDark ? '#aaa' : '#999'}
             value={price}
             keyboardType="numeric"
             onChangeText={text => { setPrice(text); if (errors.price) setErrors(prev => ({ ...prev, price: '' })); }}
-            style={[styles.input, errors.price ? styles.inputError : null]}
+            style={[
+              styles.input,
+              { backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5', color: isDark ? '#fff' : '#000' },
+              errors.price ? styles.inputError : null
+            ]}
           />
           {errors.price ? <Text style={styles.errorText}>{errors.price}</Text> : null}
         </View>
@@ -82,25 +77,34 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ visible, onC
         <View style={styles.field}>
           <TextInput
             placeholder="URL Gambar"
+            placeholderTextColor={isDark ? '#aaa' : '#999'}
             value={image}
             onChangeText={text => { setImage(text); if (errors.image) setErrors(prev => ({ ...prev, image: '' })); }}
-            style={[styles.input, errors.image ? styles.inputError : null]}
+            style={[
+              styles.input,
+              { backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5', color: isDark ? '#fff' : '#000' },
+              errors.image ? styles.inputError : null
+            ]}
           />
           {errors.image ? <Text style={styles.errorText}>{errors.image}</Text> : null}
         </View>
 
         <TextInput
           placeholder="Deskripsi (opsional)"
+          placeholderTextColor={isDark ? '#aaa' : '#999'}
           value={desc}
           onChangeText={setDesc}
-          style={styles.input}
+          style={[styles.input, { backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5', color: isDark ? '#fff' : '#000' }]}
           multiline
         />
 
         <View style={styles.buttonContainer}>
-          <Button title="Tambah" onPress={handleAdd} />
-          <View style={{ height: 8 }} />
-          <Button title="Tutup" color="gray" onPress={onClose} />
+          <TouchableOpacity style={[styles.button, { backgroundColor: '#007BFF' }]} onPress={handleAdd}>
+            <Text style={styles.buttonText}>Tambah</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.button, { backgroundColor: 'gray', marginTop: 8 }]} onPress={onClose}>
+            <Text style={styles.buttonText}>Tutup</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </Modal>
@@ -108,11 +112,13 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ visible, onC
 };
 
 const styles = StyleSheet.create({
-  container: { padding: 20, justifyContent: 'center' },
+  container: { flexGrow: 1, padding: 20 },
   field: { marginBottom: 10 },
-  input: { borderWidth: 1, borderRadius: 5, padding: 8, marginVertical: 2 },
+  input: { borderWidth: 1, borderRadius: 8, padding: 10, marginVertical: 2 },
   inputError: { borderColor: 'red' },
   errorText: { color: 'red', fontSize: 12, marginTop: 2 },
-  title: { fontWeight: 'bold', fontSize: 18, marginBottom: 15, textAlign: 'center' },
-  buttonContainer: { marginTop: 10 },
+  title: { fontWeight: 'bold', fontSize: 20, marginBottom: 15, textAlign: 'center' },
+  buttonContainer: { marginTop: 20 },
+  button: { padding: 14, borderRadius: 8, alignItems: 'center' },
+  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
 });

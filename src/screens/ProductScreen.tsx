@@ -1,58 +1,73 @@
-import React, { useState, useEffect } from 'react';
-import { View, FlatList, RefreshControl, StyleSheet, useWindowDimensions } from 'react-native';
-import { ProductCard } from '../components/ProductCard';
+import React, { useState } from 'react';
+import { View, FlatList, Text, Image, StyleSheet } from 'react-native';
+import { initialProducts } from '../data/Product';
+import { useTheme } from '../context/ThemeContext';
+import { Navbar } from '../components/Navbar';
 
-export const ProductScreen = ({ theme, products }: any) => {
-  const [refreshing, setRefreshing] = useState(false);
-  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
-  const { width, height } = useWindowDimensions();
+export const ProductScreen = ({ navigation }: any) => {
+  const [products, setProducts] = useState(initialProducts);
+  const { isDark } = useTheme();
 
-  useEffect(() => {
-    setOrientation(height > width ? 'portrait' : 'landscape');
-  }, [width, height]);
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
+  // Callback untuk menambahkan produk baru
+  const handleAddProduct = (product: any) => {
+    setProducts(prev => [...prev, product]);
   };
 
-  const numColumns = orientation === 'portrait' ? 2 : 3;
-
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? '#121212' : '#ffffff' },
+      ]}
+    >
+      <Navbar
+        onAddProduct={() =>
+          navigation.navigate('AddProduct', { onSubmit: handleAddProduct })
+        }
+      />
+
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: isDark ? '#ffffff' : '#000000' }]}>
+          Daftar Produk
+        </Text>
+      </View>
+
       <FlatList
-        key={numColumns}
         data={products}
         keyExtractor={item => item.id}
-        numColumns={numColumns}
-        columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.listContent}
-        renderItem={({ item, index }) => (
-          <ProductCard
-            name={item.name}
-            price={item.price}
-            image={item.image}
-            description={item.description}
-            textColor={theme.text}
-            bgColor={theme.card}
-            index={index}
-            numColumns={numColumns}
-          />
+        renderItem={({ item }) => (
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9',
+                borderColor: isDark ? '#333' : '#ccc',
+              },
+            ]}
+          >
+            <Image source={{ uri: item.image }} style={styles.image} />
+            <View style={styles.info}>
+              <Text style={[styles.name, { color: isDark ? '#fff' : '#000' }]}>
+                {item.name}
+              </Text>
+              <Text style={{ color: isDark ? '#bbb' : '#333' }}>Rp {item.price}</Text>
+              <Text style={{ color: isDark ? '#999' : '#666', fontSize: 12 }}>
+                {item.description}
+              </Text>
+            </View>
+          </View>
         )}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        showsVerticalScrollIndicator={false}
       />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 8 },
-  row: {
-    justifyContent: 'flex-start', // 🔧 hilangkan space di tengah
-    flexWrap: 'wrap',
-  },
-  listContent: {
-    paddingBottom: 10,
-  },
+  container: { flex: 1, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 20 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 15, marginBottom: 15 },
+  title: { fontSize: 20, fontWeight: 'bold' },
+  card: { flexDirection: 'row', borderWidth: 1, borderRadius: 10, padding: 10, marginBottom: 10 },
+  image: { width: 100, height: 100, borderRadius: 10 },
+  info: { flex: 1, paddingLeft: 10 },
+  name: { fontWeight: 'bold', fontSize: 16 },
 });
