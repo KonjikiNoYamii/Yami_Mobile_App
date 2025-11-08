@@ -2,11 +2,9 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { HomeScreen } from "../screens/HomeScreen";
 import { ProductScreen } from "../screens/ProductScreen";
-import 
-
-const Tab = createBottomTabNavigator();
 
 export const TabNavigator = () => {
+  const Tab = createBottomTabNavigator();
   return (
     <Tab.Navigator
       screenOptions={{
