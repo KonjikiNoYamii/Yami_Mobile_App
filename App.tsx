@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
-import { useTheme } from './src/hooks/useTheme';
-import { initialProducts } from './src/data/products';
-import { ProductScreen } from './src/screens/ProductScreen';
-import { AddProductScreen } from './src/screens/AddProductScreen';
-import { HomeScreen } from './src/screens/HomeScreen';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'react-native';
-import { Navbar } from './src/components/Navbar';
+import { useTheme } from '@react-navigation/native';
 
 const App =()  => {
   const { isDark, setIsDark, theme } = useTheme();
