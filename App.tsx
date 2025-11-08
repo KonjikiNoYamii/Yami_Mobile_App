@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'react-native';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from './src/hooks/useTheme';
+import { ProductScreen } from './src/screens/ProductScreen';
+import { AddProductScreen } from './src/screens/AddProductScree';
+import { HomeScreen } from './src/screens/HomeScreen';
+import { Navbar } from './src/components/Navbar';
+import { initialProducts } from './src/data/Product';
 
 const App =()  => {
   const { isDark, setIsDark, theme } = useTheme();
