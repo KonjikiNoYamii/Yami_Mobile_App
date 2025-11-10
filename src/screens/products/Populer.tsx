@@ -2,12 +2,13 @@ import { View, FlatList, RefreshControl, StyleSheet } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { initialProducts } from '../../data/products';
 import { ProductCard } from '../../components/ProductCard';
-import { useIsFocused } from '@react-navigation/native';
+import { useIsFocused} from '@react-navigation/native';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function Populer() {
   const [refreshing, setRefreshing] = useState(false);
-
     const isFocused = useIsFocused();
+    const {isDark} = useTheme()
   
       useEffect(() => {
       if (isFocused) {
@@ -31,7 +32,7 @@ export default function Populer() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: isDark ? '#222' : '#fff' }]}>
       <FlatList
         data={products}
         keyExtractor={item => item.id}
@@ -42,7 +43,7 @@ export default function Populer() {
             name={item.name}
             price={item.price}
             image={item.image}
-            description={item.description}
+            description={item.desc}
           />
         )}
         refreshControl={
@@ -56,7 +57,5 @@ export default function Populer() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 8 },
-  row: {
-    justifyContent: 'space-between',
-  },
+  row: { justifyContent: 'space-between' },
 });

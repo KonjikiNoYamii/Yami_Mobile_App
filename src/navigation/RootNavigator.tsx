@@ -1,12 +1,15 @@
-import { View, Text } from 'react-native'
-import React from 'react'
-import { NavigationContainer } from '@react-navigation/native'
-import DrawerNavigator from './DrawerNavigator'
+import { View } from 'react-native';
+import React from 'react';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
+import DrawerNavigator from './DrawerNavigator';
+import { useTheme } from '../context/ThemeContext';
 
 export default function RootNavigator() {
-  return(
-    <NavigationContainer>
-        <DrawerNavigator />
+  const { isDark } = useTheme();
+
+  return (
+    <NavigationContainer theme={isDark ? DarkTheme : DefaultTheme}>
+      <DrawerNavigator />
     </NavigationContainer>
-  )
+  );
 }

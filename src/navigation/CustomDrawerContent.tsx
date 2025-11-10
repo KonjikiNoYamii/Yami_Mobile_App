@@ -5,27 +5,30 @@ import {
   DrawerItem,
 } from "@react-navigation/drawer";
 import { View, Text, Image, StyleSheet } from "react-native";
+import { useTheme } from "../context/ThemeContext";
 
 const CustomDrawerContent = (props: any) => {
+  const { isDark } = useTheme();
+
   return (
-    <DrawerContentScrollView {...props} contentContainerStyle={{ flex: 1 }}>
-      {/* Bagian atas: Avatar dan nama pengguna */}
-      <View style={styles.header}>
+    <DrawerContentScrollView
+      {...props}
+      contentContainerStyle={{ flex: 1, backgroundColor: isDark ? '#222' : '#fff' }}
+    >
+      <View style={[styles.header, { backgroundColor: isDark ? '#333' : '#f5f5f5' }]}>
         <Image
           source={{
             uri: "https://i.pinimg.com/736x/4f/ba/52/4fba52077290a2a1ca93ff9c4970dc74.jpg",
           }}
           style={styles.avatar}
         />
-        <Text style={styles.name}>User</Text>
+        <Text style={[styles.name, { color: isDark ? '#fff' : '#000' }]}>User</Text>
       </View>
 
-      {/* Daftar menu utama */}
       <View style={styles.menu}>
         <DrawerItemList {...props} />
       </View>
 
-      {/* Tombol Logout di bawah */}
       <View style={styles.footer}>
         <DrawerItem
           label="Logout"
@@ -43,7 +46,6 @@ const styles = StyleSheet.create({
     paddingVertical: 30,
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
-    backgroundColor: "#f5f5f5",
   },
   avatar: {
     width: 80,

@@ -2,19 +2,21 @@ import React, { useState } from 'react';
 import { View, FlatList, RefreshControl, StyleSheet } from 'react-native';
 import { ProductCard } from '../components/ProductCard';
 import { initialProducts } from '../data/products';
+import { useTheme } from '../context/ThemeContext';
 
 export const ProductScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
+  const { isDark } = useTheme(); // 🌙 ambil nilai tema
 
   const onRefresh = () => {
     setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
+    setTimeout(() => setRefreshing(false), 1000);
   };
-const products = initialProducts
+
+  const products = initialProducts;
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: isDark ? '#222' : '#fff' }]}>
       <FlatList
         data={products}
         keyExtractor={item => item.id}
@@ -25,7 +27,8 @@ const products = initialProducts
             name={item.name}
             price={item.price}
             image={item.image}
-            description={item.description}
+            description={item.desc}
+            isDark={isDark} // optional kalau card mendukung tema
           />
         )}
         refreshControl={
@@ -39,7 +42,5 @@ const products = initialProducts
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 8 },
-  row: {
-    justifyContent: 'space-between',
-  },
+  row: { justifyContent: 'space-between' },
 });

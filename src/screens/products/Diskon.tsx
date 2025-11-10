@@ -2,23 +2,25 @@ import { View, FlatList, RefreshControl, StyleSheet } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { initialProducts } from '../../data/products';
 import { ProductCard } from '../../components/ProductCard';
-import { useIsFocused } from '@react-navigation/native';
+import { useIsFocused} from '@react-navigation/native';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function Diskon() {
   const [refreshing, setRefreshing] = useState(false);
-  const isFocused = useIsFocused();
-
-    useEffect(() => {
-    if (isFocused) {
-      console.log("🟢 Tab 'Diskon' sedang aktif");
-    } else {
-      console.log("🔴 Tab 'Diskon' tidak aktif");
-    }
-
-    return () => {
-      if (isFocused) console.log("⚪ Membersihkan efek dari tab 'Diskon'");
-    };
-  }, [isFocused]);
+    const isFocused = useIsFocused();
+    const {isDark} = useTheme()
+  
+      useEffect(() => {
+      if (isFocused) {
+        console.log("🟢 Tab 'Diskon' sedang aktif");
+      } else {
+        console.log("🔴 Tab 'Diskon' tidak aktif");
+      }
+  
+      return () => {
+        if (isFocused) console.log("⚪ Membersihkan efek dari tab 'Diskon'");
+      };
+    }, [isFocused]);
 
   const products = initialProducts.filter(item => item.category === 'Diskon');
 
@@ -30,7 +32,7 @@ export default function Diskon() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: isDark ? '#222' : '#fff' }]}>
       <FlatList
         data={products}
         keyExtractor={item => item.id}
@@ -41,7 +43,7 @@ export default function Diskon() {
             name={item.name}
             price={item.price}
             image={item.image}
-            description={item.description}
+            description={item.desc}
           />
         )}
         refreshControl={
@@ -55,7 +57,5 @@ export default function Diskon() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 8 },
-  row: {
-    justifyContent: 'space-between',
-  },
+  row: { justifyContent: 'space-between' },
 });

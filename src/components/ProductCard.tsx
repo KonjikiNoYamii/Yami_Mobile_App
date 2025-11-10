@@ -6,6 +6,7 @@ interface ProductCardProps {
   price: number;
   description: string;
   image: string;
+  isDark?: boolean; // 🌙 tambahkan ini
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
@@ -13,15 +14,27 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   price,
   description,
   image,
+  isDark = false,
 }) => {
   return (
-    <View style={styles.card}>
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: isDark ? '#333' : '#fff', shadowColor: isDark ? '#000' : '#888' },
+      ]}
+    >
       <Image source={{ uri: image }} style={styles.image} resizeMode="cover" />
-      <Text style={styles.name} numberOfLines={1}>
+      <Text style={[styles.name, { color: isDark ? '#fff' : '#333' }]} numberOfLines={1}>
         {name}
       </Text>
-      <Text style={styles.price}>Rp {price.toLocaleString('id-ID')}</Text>
-      <Text style={styles.desc} numberOfLines={2} ellipsizeMode="tail">
+      <Text style={[styles.price, { color: isDark ? '#f5a623' : '#e67e22' }]}>
+        Rp {price.toLocaleString('id-ID')}
+      </Text>
+      <Text
+        style={[styles.desc, { color: isDark ? '#ccc' : '#555' }]}
+        numberOfLines={2}
+        ellipsizeMode="tail"
+      >
         {description}
       </Text>
     </View>
@@ -31,13 +44,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     flexBasis: '48%',
-    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 10,
     marginBottom: 10,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.15,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 3,
@@ -53,18 +64,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
     textAlign: 'center',
-    color: '#333',
   },
   price: {
     fontSize: 13,
     marginVertical: 4,
-    color: '#e67e22',
     fontWeight: 'bold',
   },
   desc: {
     fontSize: 11,
     textAlign: 'center',
     opacity: 0.8,
-    color: '#555',
   },
 });
