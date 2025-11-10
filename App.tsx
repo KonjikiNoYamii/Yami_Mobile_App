@@ -1,43 +1,14 @@
 import React, { useState } from 'react';
-import { useTheme } from './src/hooks/useTheme';
-import { initialProducts } from './src/data/products';
-import { ProductScreen } from './src/screens/ProductScreen';
-import { AddProductScreen } from './src/screens/AddProductScreen';
-import { HomeScreen } from './src/screens/HomeScreen';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'react-native';
-import { Navbar } from './src/components/Navbar';
+
+import { NavigationContainer } from '@react-navigation/native';
+import DrawerNavigator from './src/navigation/DrawerNavigator';
 
 export default function App() {
-  const { isDark, setIsDark, theme } = useTheme();
-  const [screen, setScreen] = useState<'Home' | 'Products' | 'Add'>('Home');
-  const [products, setProducts] = useState(initialProducts);
-
-  const addProduct = (newProduct: any) => {
-    setProducts(prev => [newProduct, ...prev]);
-    setScreen('Products'); // setelah tambah produk, langsung tampil di daftar
-  };
-
-  const renderScreen = () => {
-    switch (screen) {
-      case 'Products':
-        return <ProductScreen theme={theme} products={products} />;
-      case 'Add':
-        return <AddProductScreen addProduct={addProduct} />;
-      default:
-        return <HomeScreen theme={theme} />;
-    }
-  };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
-      <Navbar
-        isDark={isDark}
-        onToggleTheme={() => setIsDark(!isDark)}
-        navigate={setScreen}
-      />
-      {renderScreen()}
-    </SafeAreaView>
+      <NavigationContainer>
+        <DrawerNavigator />
+      </NavigationContainer>
+    
   );
 }

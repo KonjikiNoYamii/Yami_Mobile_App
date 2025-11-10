@@ -6,8 +6,6 @@ interface ProductCardProps {
   price: number;
   description: string;
   image: string;
-  textColor: string;
-  bgColor: string;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
@@ -15,23 +13,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   price,
   description,
   image,
-  textColor,
-  bgColor,
 }) => {
   return (
-    <View style={[styles.card, { backgroundColor: bgColor }]}>
-      <Image source={{ uri: image }} style={styles.image} />
-      <Text style={[styles.name, { color: textColor }]} numberOfLines={1}>
+    <View style={styles.card}>
+      <Image source={{ uri: image }} style={styles.image} resizeMode="cover" />
+      <Text style={styles.name} numberOfLines={1}>
         {name}
       </Text>
-      <Text style={[styles.price, { color: textColor }]}>
-        Rp {price.toLocaleString('id-ID')}
-      </Text>
-      <Text
-        style={[styles.desc, { color: textColor }]}
-        numberOfLines={3}
-        ellipsizeMode="tail"
-      >
+      <Text style={styles.price}>Rp {price.toLocaleString('id-ID')}</Text>
+      <Text style={styles.desc} numberOfLines={2} ellipsizeMode="tail">
         {description}
       </Text>
     </View>
@@ -40,34 +30,41 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    flex: 1,
+    flexBasis: '48%',
+    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 10,
-    margin: 5,
+    marginBottom: 10,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
+    overflow: 'hidden',
   },
   image: {
-    width: 100,
-    height: 100,
-    borderRadius: 10,
+    width: '100%',
+    height: 120,
+    borderRadius: 8,
     marginBottom: 8,
   },
   name: {
-    fontWeight: 'bold',
+    fontWeight: '600',
     fontSize: 14,
     textAlign: 'center',
+    color: '#333',
   },
   price: {
     fontSize: 13,
     marginVertical: 4,
+    color: '#e67e22',
+    fontWeight: 'bold',
   },
   desc: {
     fontSize: 11,
     textAlign: 'center',
     opacity: 0.8,
+    color: '#555',
   },
 });

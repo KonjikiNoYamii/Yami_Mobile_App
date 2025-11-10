@@ -1,10 +1,27 @@
-import React, { useState } from 'react';
 import { View, FlatList, RefreshControl, StyleSheet } from 'react-native';
-import { ProductCard } from '../components/ProductCard';
-import { initialProducts } from '../data/products';
+import React, { useEffect, useState } from 'react';
+import { initialProducts } from '../../data/products';
+import { ProductCard } from '../../components/ProductCard';
+import { useIsFocused } from '@react-navigation/native';
 
-export const ProductScreen = () => {
+export default function Populer() {
   const [refreshing, setRefreshing] = useState(false);
+
+    const isFocused = useIsFocused();
+  
+      useEffect(() => {
+      if (isFocused) {
+        console.log("🟢 Tab 'Populer' sedang aktif");
+      } else {
+        console.log("🔴 Tab 'Populer' tidak aktif");
+      }
+  
+      return () => {
+        if (isFocused) console.log("⚪ Membersihkan efek dari tab 'Populer'");
+      };
+    }, [isFocused]);
+
+  const products = initialProducts.filter(item => item.category === 'Populer');
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -12,7 +29,7 @@ export const ProductScreen = () => {
       setRefreshing(false);
     }, 1000);
   };
-const products = initialProducts
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -35,7 +52,7 @@ const products = initialProducts
       />
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 8 },
