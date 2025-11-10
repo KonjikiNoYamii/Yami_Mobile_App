@@ -1,9 +1,11 @@
-import React from 'react'
+import React from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { DrawerNavigator } from "./src/routes/DrawerNavigator";
 
-function App() {
+export default function App() {
   return (
-    <div>App</div>
-  )
+    <NavigationContainer>
+      <DrawerNavigator />
+    </NavigationContainer>
+  );
 }
-
-export default App
