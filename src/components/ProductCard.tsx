@@ -1,27 +1,32 @@
+import { useNavigation } from '@react-navigation/native';
 import React from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface ProductCardProps {
+  id:number
   name: string;
   price: number;
   description: string;
   image: string;
-  isDark?: boolean; // 🌙 tambahkan ini
+  isDark?: boolean;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
+  id,
   name,
   price,
   description,
   image,
   isDark = false,
 }) => {
+  const navigation = useNavigation<any>()
   return (
-    <View
+    <TouchableOpacity
       style={[
         styles.card,
         { backgroundColor: isDark ? '#333' : '#fff', shadowColor: isDark ? '#000' : '#888' },
       ]}
+      onPress={() => navigation.navigate('ProductDetail',{ id,name,price,description,image,isDark })}
     >
       <Image source={{ uri: image }} style={styles.image} resizeMode="cover" />
       <Text style={[styles.name, { color: isDark ? '#fff' : '#333' }]} numberOfLines={1}>
@@ -37,7 +42,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       >
         {description}
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 };
 

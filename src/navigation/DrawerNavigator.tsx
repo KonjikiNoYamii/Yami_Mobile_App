@@ -6,6 +6,9 @@ import { ProductScreen } from '../screens/ProductScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import SettingScreen from '../screens/SettingScreen';
 import { useTheme } from '../context/ThemeContext';
+import HomeStack from './HomeStack';
+import MainTabs from './MainTabs';
+import LoginScreen from '../screens/LoginScreen';
 
 const Drawer = createDrawerNavigator();
 
@@ -23,10 +26,11 @@ export default function DrawerNavigator() {
         headerShown: true,
       }}
     >
-      <Drawer.Screen name="Home" component={HomeScreen} />
-      <Drawer.Screen name="Product" component={ProductScreen} />
-      <Drawer.Screen name="Profile" component={ProfileScreen} />
+      <Drawer.Screen name="MainTabs" component={MainTabs} options={{
+        title:"Beranda"
+      }}/>
       <Drawer.Screen name="Settings" component={SettingScreen} />
+      <Drawer.Screen name='Login' component={LoginScreen} />
     </Drawer.Navigator>
   );
 }
