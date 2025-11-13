@@ -1,15 +1,21 @@
-import React from "react";
-import { NavigationContainer} from "@react-navigation/native";
-import { ThemeProvider } from "./src/context/ThemeContext";
-import { StackNavigator } from "./src/navigation/StackNavigator";
+import { View, Text } from 'react-native'
+import React from 'react'
+import AppNavigator from './src/navigation/AppNavigator'
+import { ThemeProvider } from './src/context/ThemeContext'
+import { NavigationContainer } from '@react-navigation/native'
+import { AuthProvider } from './src/context/AuthContext'
+import { CartProvider } from './src/context/CartContext'
 
-const App =() => {
+export default function App() {
   return (
-    <ThemeProvider >
-      <NavigationContainer>
-      <StackNavigator />
-    </NavigationContainer>
+    <CartProvider>
+      <AuthProvider>
+      <ThemeProvider>
+        <NavigationContainer>
+        <AppNavigator />
+      </NavigationContainer>
     </ThemeProvider>
-  );
+    </AuthProvider>
+    </CartProvider>
+  )
 }
-export default App
