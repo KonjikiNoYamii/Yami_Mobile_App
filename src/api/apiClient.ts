@@ -19,6 +19,27 @@ apiClient.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
+apiClient.interceptors.response.use(
+  (response) => response,
+
+  (error) => {
+    // Tambahan UNTUK VALIDATION ERROR (400)
+    if (error.response?.status === 400) {
+      return Promise.reject({
+        type: "VALIDATION_ERROR",
+        errors: error.response.data?.errors || {},
+      });
+    }
+
+    // Timeout
+    if (error.code === "ECONNABORTED") {
+      error.message = "Permintaan timeout. Silakan coba lagi.";
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {

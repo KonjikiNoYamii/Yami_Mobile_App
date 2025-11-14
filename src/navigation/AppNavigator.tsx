@@ -5,7 +5,6 @@ import Checkout from '../screens/Checkout';
 import ProductDetail from '../components/ProductDetail';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTheme } from '../context/ThemeContext'; // asumsikan ada isDark di sini
-import CartScreen from '../screens/CartScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -13,6 +12,7 @@ export default function AppNavigator() {
   const { isDark } = useTheme(); // ambil nilai isDark dari context
 
   return (
+    
     <Stack.Navigator
       initialRouteName="Login"
       screenOptions={{
@@ -22,6 +22,7 @@ export default function AppNavigator() {
         },
       }}
     >
+      
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Root" component={DrawerNavigator} />
       <Stack.Screen

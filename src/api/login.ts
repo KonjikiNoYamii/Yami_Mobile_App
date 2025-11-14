@@ -1,6 +1,6 @@
  // pastikan nama file apiClient sesuai
 
-import apiClient from "./api";
+import apiClient from "./apiClient";
 
 // Simulasi login dengan Axios POST
 export const loginRequest = async (username: string, password: string) => {

@@ -1,132 +1,136 @@
-import React, { useState } from 'react';
+// ProductDetail.tsx
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   Image,
   StyleSheet,
-  useWindowDimensions,
   Pressable,
   ScrollView,
   ActivityIndicator,
-} from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
-import Ionicons from '@react-native-vector-icons/ionicons';
+  ToastAndroid,
+} from "react-native";
+import { useRoute, useNavigation } from "@react-navigation/native";
+
+import { useProducts } from "../hooks/useProducts";
+import Ionicons from "@react-native-vector-icons/ionicons";
 
 export default function ProductDetail() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
-  const { image, name, description, price, isDark } = route.params;
-  const { width, height } = useWindowDimensions();
 
-  const [loading, setLoading] = useState(true);
-  const [errorImg, setErrorImg] = useState(false);
+  const routeProduct = route.params; // fallback awal
+  const { products, loading, error } = useProducts();
 
-  const isLandscape = width > height;
+  const [product, setProduct] = useState(routeProduct);
+
+  // =====================================================
+  // A. Update product jika API berhasil
+  // =====================================================
+  useEffect(() => {
+    if (products && products.length > 0) {
+      const updated = products.find((p) => p.id === routeProduct.id);
+
+      if (updated) {
+        setProduct(updated);
+      } else {
+        console.warn(
+          "Produk tidak ditemukan di server, menggunakan data route params."
+        );
+      }
+    }
+  }, [products]);
+
+  // =====================================================
+  // B. Error Handler (404 / 500) + Toast + Fallback
+  // =====================================================
+  useEffect(() => {
+    if (!error) return;
+
+    // 🔍 Cek status code
+    const status = error?.response?.status;
+
+    if (status === 404) {
+      console.error("ERROR 404: Produk tidak ditemukan di server");
+    } else if (status === 500) {
+      console.error("ERROR 500: Server bermasalah saat memuat produk");
+    } else {
+      console.error("Unknown API Error:", error);
+    }
+
+    // 🔥 Toast fallback
+    ToastAndroid.show(
+      "Gagal memuat data terbaru. Menampilkan versi arsip.",
+      ToastAndroid.LONG
+    );
+
+    // 🔥 Data fallback lokal
+    setProduct({
+      id: routeProduct.id,
+      name: "(Arsip) Produk Tidak Tersedia",
+      description:
+        "Data offline digunakan karena gagal memuat data terbaru dari server.",
+      price: routeProduct.price ?? 0,
+      image: "https://picsum.photos/400/300",
+    });
+  }, [error]);
+
+  // THEME
   const themeColors = {
-    bg: isDark ? '#1e1e1e' : '#f9f9f9',
-    card: isDark ? '#2a2a2a' : '#fff',
-    text: isDark ? '#fff' : '#222',
-    desc: isDark ? '#ccc' : '#555',
-    price: isDark ? '#f5a623' : '#e67e22',
-    iconBg: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.05)',
-    buttonBg: isDark ? '#f5a623' : '#e67e22',
-    buttonText: isDark ? '#1e1e1e' : '#fff',
+    bg: route.params.isDark ? "#1e1e1e" : "#f9f9f9",
+    card: route.params.isDark ? "#2a2a2a" : "#fff",
+    text: route.params.isDark ? "#fff" : "#222",
+    desc: route.params.isDark ? "#ccc" : "#555",
+    price: route.params.isDark ? "#f5a623" : "#e67e22",
+    iconBg: route.params.isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.05)",
+    buttonBg: route.params.isDark ? "#f5a623" : "#e67e22",
+    buttonText: route.params.isDark ? "#1e1e1e" : "#fff",
   };
 
   return (
     <View style={[styles.container, { backgroundColor: themeColors.bg }]}>
-      {/* Tombol Back */}
-<Pressable
-  style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
-  onPress={() => navigation.goBack()}
->
-  <Ionicons name="chevron-back" size={26} color={themeColors.text} />
-</Pressable>
+      {/* Back Button */}
+      <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Ionicons name="chevron-back" size={26} color={themeColors.text} />
+      </Pressable>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingHorizontal: isLandscape ? 60 : 16 },
-        ]}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {loading && <ActivityIndicator size="large" color={themeColors.price} />}
+
         {/* Gambar Produk */}
-        <View style={{ alignItems: 'center' }}>
-          {loading && (
-            <ActivityIndicator
-              size="large"
-              color={themeColors.price}
-              style={{ position: 'absolute', top: 100 }}
-            />
-          )}
+        <Image
+          source={{ uri: product.image }}
+          style={styles.image}
+          resizeMode="cover"
+          onError={() => console.warn("Gagal load gambar")}
+        />
 
-          {!errorImg ? (
-            <Image
-              source={{ uri: image }}
-              style={[
-                styles.image,
-                {
-                  width: isLandscape ? width * 0.5 : width * 0.8,
-                  height: isLandscape ? height * 0.6 : 260,
-                  opacity: loading ? 0.4 : 1,
-                },
-              ]}
-              onLoadEnd={() => setLoading(false)}
-              onError={() => setErrorImg(true)}
-              resizeMode="cover"
-            />
-          ) : (
-            <View
-              style={[
-                styles.imageFallback,
-                { width: width * 0.8, backgroundColor: themeColors.card },
-              ]}
-            >
-              <Ionicons
-                name="image-outline"
-                size={80}
-                color={themeColors.desc}
-              />
-              <Text style={{ color: themeColors.desc, marginTop: 8 }}>
-                Gambar tidak tersedia
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Detail Produk */}
-        <View
-          style={[
-            styles.infoBox,
-            {
-              backgroundColor: themeColors.card,
-              marginTop: isLandscape ? 20 : 30,
-            },
-          ]}
-        >
-          <Text style={[styles.name, { color: themeColors.text }]}>{name}</Text>
-
-          {price && (
-            <Text style={[styles.price, { color: themeColors.price }]}>
-              Rp {price.toLocaleString('id-ID')}
-            </Text>
-          )}
-
-          <Text style={[styles.desc, { color: themeColors.desc }]}>
-            {description}
+        {/* Info Box */}
+        <View style={[styles.infoBox, { backgroundColor: themeColors.card }]}>
+          <Text style={[styles.name, { color: themeColors.text }]}>
+            {product.title}
           </Text>
 
-          {/* Checkout Button */}
+          <Text style={[styles.price, { color: themeColors.price }]}>
+            Rp {product.price?.toLocaleString("id-ID")}
+          </Text>
+
+          <Text style={[styles.desc, { color: themeColors.desc }]}>
+            {product.description}
+          </Text>
+
+          {/* Checkout */}
           <Pressable
-            style={({ pressed }) => [
+            style={[
               styles.checkoutButton,
-              {
-                backgroundColor: themeColors.buttonBg,
-                opacity: pressed ? 0.8 : 1,
-              },
+              { backgroundColor: themeColors.buttonBg },
             ]}
             onPress={() =>
-              navigation.navigate('Checkout', { name, price, isDark })
+              navigation.navigate("Checkout", {
+                name: product.name,
+                price: product.price,
+                isDark: route.params.isDark,
+              })
             }
           >
             <Text
@@ -142,93 +146,40 @@ export default function ProductDetail() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    position: 'relative',
-  },
-  scrollContent: {
-    alignItems: 'center',
-    paddingTop: 70,
-    paddingBottom: 40,
-  },
-  image: {
-    borderRadius: 18,
-    marginBottom: 10,
-  },
-  imageFallback: {
-    height: 260,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  infoBox: {
-    width: '100%',
-    borderRadius: 16,
-    padding: 18,
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 6,
-    elevation: 5,
-  },
+  container: { flex: 1, position: "relative" },
+  scrollContent: { padding: 16, alignItems: "center" },
+  image: { width: "80%", height: 260, borderRadius: 16, marginBottom: 16 },
+  infoBox: { width: "100%", borderRadius: 12, padding: 16 },
   name: {
-    fontWeight: '700',
     fontSize: 22,
+    fontWeight: "700",
     marginBottom: 6,
-    textAlign: 'center',
+    textAlign: "center",
   },
   price: {
     fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 12,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 8,
   },
-  desc: {
-    fontSize: 15,
-    lineHeight: 22,
-    textAlign: 'justify',
-    marginBottom: 20,
-  },
+  desc: { fontSize: 15, lineHeight: 22, textAlign: "justify", marginBottom: 12 },
   backButton: {
-  position: 'absolute',
-  top: 45,
-  left: 16,
-  zIndex: 20,
-  width: 44,
-  height: 44,
-  borderRadius: 22,
-  backgroundColor: '#cccccc', // ini nanti bisa diganti dengan themeColors.iconBg via array
-  justifyContent: 'center',
-  alignItems: 'center',
-  shadowColor: '#000',
-  shadowOpacity: 0.25,
-  shadowOffset: { width: 0, height: 4 },
-  shadowRadius: 4,
-  elevation: 5,
-},
-backButtonPressed: {
-  shadowOpacity: 0.35,
-  shadowOffset: { width: 0, height: 6 },
-  shadowRadius: 6,
-  elevation: 6,
-  transform: [{ scale: 0.95 }],
-},
-
+    position: "absolute",
+    top: 45,
+    left: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#ccc",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+  },
   checkoutButton: {
-    marginTop: 20,
-    paddingVertical: 14,
+    marginTop: 12,
+    paddingVertical: 12,
     borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 4,
-    elevation: 5,
+    alignItems: "center",
   },
-  checkoutText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  checkoutText: { fontSize: 16, fontWeight: "bold" },
 });

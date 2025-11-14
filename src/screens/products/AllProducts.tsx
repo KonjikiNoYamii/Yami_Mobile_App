@@ -7,6 +7,7 @@ import {
   useWindowDimensions,
   ActivityIndicator,
   Text,
+  Pressable,
 } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { ProductCard } from "../../components/ProductCard";
@@ -18,7 +19,7 @@ export default function AllProducts() {
   const { isDark } = useTheme();
   const { width, height } = useWindowDimensions();
   const { connectionType } = useNetInfo();
-  const { products, loading, error, isOnline } = useProducts();
+  const { products, loading, error, isOnline, retry } = useProducts();
 
   const numColumns = width > height ? 3 : 2;
   const cardWidth = (width - (numColumns + 1) * 8) / numColumns;
@@ -40,14 +41,22 @@ export default function AllProducts() {
     );
 
   // Saat ada error
-  if (error)
-    return (
-      <View style={styles.center}>
-        <Text style={[styles.errorText, { color: isDark ? "#ff8888" : "red" }]}>
-          {error}
+if (error)
+  return (
+    <View style={styles.center}>
+      <Text style={styles.errorText}>{error}</Text>
+
+      <Pressable
+        onPress={retry}
+        style={{ marginTop: 10, padding: 10, backgroundColor: "orange" }}
+      >
+        <Text style={{ color: "#fff", fontWeight: "700" }}>
+          Coba Lagi Manual
         </Text>
-      </View>
-    );
+      </Pressable>
+    </View>
+  );
+
 
   // Saat tidak ada koneksi internet
   if (!isOnline)
