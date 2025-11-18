@@ -11,7 +11,7 @@ const Drawer = createDrawerNavigator();
 
 export default function DrawerNavigator() {
   const route = useRoute<any>()
-  const { userID } = route.params; 
+  const  userID  = route.params; 
 
   const { isDark } = useTheme();
 

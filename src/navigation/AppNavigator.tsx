@@ -4,17 +4,21 @@ import DrawerNavigator from './DrawerNavigator';
 import Checkout from '../screens/Checkout';
 import ProductDetail from '../components/ProductDetail';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useTheme } from '../context/ThemeContext'; // asumsikan ada isDark di sini
+import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
-  const { isDark } = useTheme(); // ambil nilai isDark dari context
+  const { isDark } = useTheme();
+  const { isLoggedIn, isLoading } = useAuth();
+
+  // Saat masih cek token di storage → jangan render apa pun
+  if (isLoading) return null;
 
   return (
-    
     <Stack.Navigator
-      initialRouteName="Login"
+      initialRouteName={isLoggedIn ? "Root" : "Login"}
       screenOptions={{
         headerShown: false,
         contentStyle: {
@@ -22,9 +26,16 @@ export default function AppNavigator() {
         },
       }}
     >
-      
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Root" component={DrawerNavigator} />
+
+      {!isLoggedIn ? (
+        // Jika belum login → tampilkan Login
+        <Stack.Screen name="Login" component={LoginScreen} />
+      ) : (
+        // Jika sudah login → tampilkan Root
+        <Stack.Screen name="Root" component={DrawerNavigator} />
+      )}
+
+      {/* Tetap disiapkan karena dipakai di dalam Root */}
       <Stack.Screen
         name="Checkout"
         component={Checkout}
@@ -33,11 +44,12 @@ export default function AppNavigator() {
           headerShown: true,
           title: 'Checkout',
           headerStyle: {
-            backgroundColor: isDark ? '#1f1f1f' : '#f8f8f8', // ternary untuk header
+            backgroundColor: isDark ? '#1f1f1f' : '#f8f8f8',
           },
-          headerTintColor: isDark ? '#fff' : '#000', // ternary untuk warna teks header
+          headerTintColor: isDark ? '#fff' : '#000',
         }}
       />
+
       <Stack.Screen
         name="ProductDetail"
         component={ProductDetail}

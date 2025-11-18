@@ -40,6 +40,7 @@ export default function Checkout() {
         product_id: id,
         alamat: alamat,
       });
+      
 
       navigation.navigate("CartScreen");
 

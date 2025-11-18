@@ -16,7 +16,11 @@ const handleLogin = async () => {
 
     if (result.success) {
       console.log("Token diterima:", result.token);
-      login(result.token); // ✅ kirim token ke context
+
+      // Simpan token ke context (plus AsyncStorage)
+      await login(result.token);
+
+      // TETAP kirim parameter userID
       navigation.replace("Root", { userID: "U123" });
     } else {
       Alert.alert("Login gagal!", "Periksa username dan password Anda.");
@@ -24,7 +28,8 @@ const handleLogin = async () => {
   } catch (error: any) {
     Alert.alert("Error", error.message || "Gagal login");
   }
-}; 
+};
+
 //username: 'emilys',
 //password: 'emilyspass',
 

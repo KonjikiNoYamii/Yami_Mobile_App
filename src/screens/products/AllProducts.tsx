@@ -95,7 +95,7 @@ if (error)
             id={item.id}
             name={item.title}
             price={item.price}
-            image={item.image}
+            image={item.thumbnail}
             description={item.description}
             isDark={isDark}
             cardWidth={cardWidth}

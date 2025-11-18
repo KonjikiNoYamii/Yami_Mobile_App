@@ -26,7 +26,7 @@ export default function BottomTabsNavigator() {
       }}
     >
       <Tabs.Screen name="Home" component={HomeScreen} />
-      <Tabs.Screen name="Products" component={ProductStack} />
+      <Tabs.Screen name="ProductsStack" component={ProductStack} />
       <Tabs.Screen
         name="Profile"
         component={ProfileScreen}
