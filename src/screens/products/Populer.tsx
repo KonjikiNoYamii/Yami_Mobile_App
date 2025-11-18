@@ -1,36 +1,32 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState } from "react";
 import {
   View,
+  ActivityIndicator,
   FlatList,
-  RefreshControl,
+  Text,
   StyleSheet,
   useWindowDimensions,
-  Button,
-} from 'react-native';
-import { initialProducts } from '../../data/products';
-import { useTheme } from '../../context/ThemeContext';
-import { ProductCard } from '../../components/ProductCard';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+} from "react-native";
+import { useProductContext } from "../../context/ProductContext";
+import { ProductCard } from "../../components/ProductCard";
+import { useTheme } from "../../context/ThemeContext";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 
 export default function Populer() {
-  const [refreshing, setRefreshing] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
+    const navigation = useNavigation<any>();
+
+  const { populer, loading } = useProductContext();
   const { isDark } = useTheme();
   const { width, height } = useWindowDimensions();
-  const navigation = useNavigation<any>();
 
-  // 🌸 Orientasi responsif
   const numColumns = width > height ? 3 : 2;
   const cardWidth = (width - (numColumns + 1) * 8) / numColumns;
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
-  }; 
 
   useFocusEffect(
     useCallback(() => {
       navigation.getParent()?.setOptions({
-        title: 'Product ter Populer!',
+        title: 'Product Ter-Populer!',
       });
       return () => {
         navigation.getParent()?.setOptions({
@@ -40,57 +36,81 @@ export default function Populer() {
     }, [navigation]),
   );
 
-  // 🌸 Fungsi toggle drawer
-  const handleToggleDrawer = () => {
-    // naik ke parent drawer dari tab
-    const drawerNav = navigation.getParent()?.getParent()?.getParent();
-    drawerNav?.toggleDrawer();
-  };
+  if (loading)
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" />
+        <Text style={[styles.loadingText, { color: isDark ? "#fff" : "#333" }]}>
+          Memuat produk diskon...
+        </Text>
+      </View>
+    );
 
-  // 🌸 Render header (berisi tombol)
-  const renderHeader = () => (
-    <View style={styles.headerContainer}>
-      <Button title=" ☰ " onPress={handleToggleDrawer} />
-    </View>
-  );
+  if (!populer || populer.length === 0)
+    return (
+      <View style={styles.center}>
+        <Text style={[styles.emptyText, { color: isDark ? "#fff" : "#333" }]}>
+          Tidak ada produk diskon saat ini
+        </Text>
+      </View>
+    );
 
   return (
     <View
-      style={[styles.container, { backgroundColor: isDark ? '#222' : '#fff' }]}
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? "#1c1c1c" : "#fff" },
+      ]}
     >
       <FlatList
-        data={initialProducts.filter(item => item.category === 'Populer')}
+        data={populer}
         key={numColumns}
-        keyExtractor={item => String(item.id)}
+        keyExtractor={(item) => String(item.id)}
         numColumns={numColumns}
         columnWrapperStyle={styles.row}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <ProductCard
             id={item.id}
-            name={item.name}
+            title={item.title}
             price={item.price}
-            image={item.image}
-            description={item.desc}
+            thumbnail={item.thumbnail}
+            description={item.description}
             isDark={isDark}
             cardWidth={cardWidth}
           />
         )}
-        ListHeaderComponent={renderHeader} // 🌸 tombol di atas list
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 16 }}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 8 },
-  row: { justifyContent: 'space-between' },
-  headerContainer: {
-    marginBottom: 8,
-    alignItems: 'flex-start',
+  container: {
+    flex: 1,
+    paddingHorizontal: 8,
+    paddingTop: 10,
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+  },
+  emptyText: {
+    fontSize: 17,
+    opacity: 0.6,
+  },
+  row: {
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  listContent: {
+    paddingBottom: 20,
   },
 });

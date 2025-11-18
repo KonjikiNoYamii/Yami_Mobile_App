@@ -1,4 +1,3 @@
-// ProductDetail.tsx
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -11,65 +10,50 @@ import {
   ToastAndroid,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
-
 import { useProducts } from "../hooks/useProducts";
+import { useCart } from "../context/CartContext";
 import Ionicons from "@react-native-vector-icons/ionicons";
 
 export default function ProductDetail() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
 
-  const routeProduct = route.params; // fallback awal
+  const routeProduct = route.params;
   const { products, loading, error } = useProducts();
+  const { addToCart } = useCart();
 
   const [product, setProduct] = useState(routeProduct);
 
-  // =====================================================
-  // A. Update product jika API berhasil
-  // =====================================================
   useEffect(() => {
-    if (products && products.length > 0) {
+    if (products.length > 0) {
       const updated = products.find((p) => p.id === routeProduct.id);
 
-      if (updated) {
-        setProduct(updated);
-      } else {
-        console.warn(
-          "Produk tidak ditemukan di server, menggunakan data route params."
-        );
-      }
+      if (updated) setProduct(updated);
+      else console.warn("Produk tidak ditemukan. Using route params.");
     }
   }, [products]);
 
-  // =====================================================
-  // B. Error Handler (404 / 500) + Toast + Fallback
-  // =====================================================
+  // ==========================
+  // ERROR HANDLING
+  // ==========================
   useEffect(() => {
     if (!error) return;
 
-    // 🔍 Cek status code
     const status = error?.response?.status;
 
-    if (status === 404) {
-      console.error("ERROR 404: Produk tidak ditemukan di server");
-    } else if (status === 500) {
-      console.error("ERROR 500: Server bermasalah saat memuat produk");
-    } else {
-      console.error("Unknown API Error:", error);
-    }
+    if (status === 404) console.log("ERROR 404: Produk tidak ditemukan");
+    else if (status === 500) console.log("ERROR 500: Server bermasalah");
 
-    // 🔥 Toast fallback
     ToastAndroid.show(
       "Gagal memuat data terbaru. Menampilkan versi arsip.",
       ToastAndroid.LONG
     );
 
-    // 🔥 Data fallback lokal
     setProduct({
       id: routeProduct.id,
       name: "(Arsip) Produk Tidak Tersedia",
       description:
-        "Data offline digunakan karena gagal memuat data terbaru dari server.",
+        "Data lokal digunakan karena gagal memuat data terbaru dari server.",
       price: routeProduct.price ?? 0,
       image: "https://picsum.photos/400/300",
     });
@@ -82,30 +66,38 @@ export default function ProductDetail() {
     text: route.params.isDark ? "#fff" : "#222",
     desc: route.params.isDark ? "#ccc" : "#555",
     price: route.params.isDark ? "#f5a623" : "#e67e22",
-    iconBg: route.params.isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.05)",
     buttonBg: route.params.isDark ? "#f5a623" : "#e67e22",
     buttonText: route.params.isDark ? "#1e1e1e" : "#fff",
   };
 
+  const handleAddCart = () => {
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      qty: 1,
+    });
+
+    ToastAndroid.show("Ditambahkan ke keranjang", ToastAndroid.SHORT);
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: themeColors.bg }]}>
-      {/* Back Button */}
       <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
         <Ionicons name="chevron-back" size={26} color={themeColors.text} />
       </Pressable>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {loading && <ActivityIndicator size="large" color={themeColors.price} />}
+        {loading && (
+          <ActivityIndicator size="large" color={themeColors.price} />
+        )}
 
-        {/* Gambar Produk */}
         <Image
-          source={{ uri: product.image }}
+          source={{ uri: product.thumbnail }}
           style={styles.image}
           resizeMode="cover"
-          onError={() => console.warn("Gagal load gambar")}
         />
 
-        {/* Info Box */}
         <View style={[styles.infoBox, { backgroundColor: themeColors.card }]}>
           <Text style={[styles.name, { color: themeColors.text }]}>
             {product.title}
@@ -119,7 +111,22 @@ export default function ProductDetail() {
             {product.description}
           </Text>
 
-          {/* Checkout */}
+          {/* ADD TO CART */}
+          <Pressable
+            style={[
+              styles.cartButton,
+              { backgroundColor: themeColors.buttonBg },
+            ]}
+            onPress={handleAddCart}
+          >
+            <Text
+              style={[styles.cartText, { color: themeColors.buttonText }]}
+            >
+              Tambah ke Keranjang
+            </Text>
+          </Pressable>
+
+          {/* CHECKOUT */}
           <Pressable
             style={[
               styles.checkoutButton,
@@ -146,23 +153,13 @@ export default function ProductDetail() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, position: "relative" },
+  container: { flex: 1 },
   scrollContent: { padding: 16, alignItems: "center" },
-  image: { width: "80%", height: 260, borderRadius: 16, marginBottom: 16 },
+  image: { width: "80%", height: 260, borderRadius: 16 },
   infoBox: { width: "100%", borderRadius: 12, padding: 16 },
-  name: {
-    fontSize: 22,
-    fontWeight: "700",
-    marginBottom: 6,
-    textAlign: "center",
-  },
-  price: {
-    fontSize: 18,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  desc: { fontSize: 15, lineHeight: 22, textAlign: "justify", marginBottom: 12 },
+  name: { fontSize: 22, fontWeight: "700", marginBottom: 6 },
+  price: { fontSize: 18, fontWeight: "bold", marginBottom: 10 },
+  desc: { fontSize: 15, lineHeight: 22, marginBottom: 12 },
   backButton: {
     position: "absolute",
     top: 45,
@@ -175,8 +172,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     zIndex: 10,
   },
+  cartButton: {
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  cartText: { fontSize: 16, fontWeight: "600" },
   checkoutButton: {
-    marginTop: 12,
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: "center",

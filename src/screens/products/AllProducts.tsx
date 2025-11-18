@@ -7,76 +7,52 @@ import {
   useWindowDimensions,
   ActivityIndicator,
   Text,
-  Pressable,
 } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { ProductCard } from "../../components/ProductCard";
-import { useProducts } from "../../hooks/useProducts";
-import { useNetInfo } from "../../hooks/useNetInfo";
+import { useProductContext } from "../../context/ProductContext";
 
 export default function AllProducts() {
   const [refreshing, setRefreshing] = useState(false);
   const { isDark } = useTheme();
   const { width, height } = useWindowDimensions();
-  const { connectionType } = useNetInfo();
-  const { products, loading, error, isOnline, retry } = useProducts();
+
+  // 🔥 ambil data dari cache global
+  const { products, loading, error, refresh } = useProductContext();
 
   const numColumns = width > height ? 3 : 2;
   const cardWidth = (width - (numColumns + 1) * 8) / numColumns;
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
+    await refresh(); // ambil ulang dari server
+    setRefreshing(false);
   };
 
-  // Saat data sedang dimuat
+  // Loading global
   if (loading)
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#007bff" />
+        <ActivityIndicator size="large" />
         <Text style={[styles.text, { color: isDark ? "#fff" : "#333" }]}>
           Memuat produk...
         </Text>
       </View>
     );
 
-  // Saat ada error
-if (error)
-  return (
-    <View style={styles.center}>
-      <Text style={styles.errorText}>{error}</Text>
-
-      <Pressable
-        onPress={retry}
-        style={{ marginTop: 10, padding: 10, backgroundColor: "orange" }}
-      >
-        <Text style={{ color: "#fff", fontWeight: "700" }}>
-          Coba Lagi Manual
-        </Text>
-      </Pressable>
-    </View>
-  );
-
-
-  // Saat tidak ada koneksi internet
-  if (!isOnline)
+  // Error global
+  if (error)
     return (
-      <View
-        style={[
-          styles.center,
-          { backgroundColor: isDark ? "#111" : "#f9f9f9" },
-        ]}
-      >
-        <Text style={styles.offlineText}>
-          🔴 Anda sedang Offline. Cek koneksi Anda.
-        </Text>
-        <Text style={styles.connectionLabel}>
-          🔌 Status: Offline (Tidak ada koneksi)
+      <View style={styles.center}>
+        <Text style={styles.errorText}>{error}</Text>
+
+        <Text style={{ marginTop: 10, opacity: 0.6 }}>
+          Tarik ke bawah untuk mencoba lagi
         </Text>
       </View>
     );
 
-  // Saat online
+  // Semua OK → render data
   return (
     <View
       style={[
@@ -93,9 +69,9 @@ if (error)
         renderItem={({ item }) => (
           <ProductCard
             id={item.id}
-            name={item.title}
+            title={item.title}
             price={item.price}
-            image={item.thumbnail}
+            thumbnail={item.thumbnail}
             description={item.description}
             isDark={isDark}
             cardWidth={cardWidth}
@@ -106,13 +82,6 @@ if (error)
         }
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
-        ListFooterComponent={
-          <View style={styles.footer}>
-            <Text style={styles.connectionLabel}>
-              🟢 Online ({connectionType ?? "Tidak diketahui"})
-            </Text>
-          </View>
-        }
       />
     </View>
   );
@@ -139,32 +108,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
   },
-  offlineText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "red",
-    textAlign: "center",
-    marginBottom: 10,
-  },
-  connectionLabel: {
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
-    padding: 8,
-    backgroundColor: "#f2f2f2",
-    borderRadius: 6,
-    width: "80%",
-    alignSelf: "center",
-  },
   row: {
     justifyContent: "space-between",
     marginBottom: 12,
   },
   listContent: {
     paddingBottom: 20,
-  },
-  footer: {
-    marginTop: 10,
-    marginBottom: 20,
   },
 });

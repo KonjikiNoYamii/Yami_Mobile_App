@@ -7,22 +7,25 @@ import { CartProvider } from './src/context/CartContext';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import { ConnectionProvider } from './src/context/ConnectionContext';
 import OfflineBannerWrapper from './src/components/OfflineBannerWrapper';
+import { ProductProvider } from './src/context/ProductContext';
 
 export default function App() {
   return (
     <ErrorBoundary>
-      <CartProvider>
-        <AuthProvider>
-          <ThemeProvider>
-            <ConnectionProvider>
-              <OfflineBannerWrapper />
-              <NavigationContainer>
-                <AppNavigator />
-              </NavigationContainer>
-            </ConnectionProvider>
-          </ThemeProvider>
-        </AuthProvider>
-      </CartProvider>
+      <ProductProvider>
+        <CartProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              <ConnectionProvider>
+                <OfflineBannerWrapper />
+                <NavigationContainer>
+                  <AppNavigator />
+                </NavigationContainer>
+              </ConnectionProvider>
+            </ThemeProvider>
+          </AuthProvider>
+        </CartProvider>
+      </ProductProvider>
     </ErrorBoundary>
   );
 }

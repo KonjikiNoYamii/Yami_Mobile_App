@@ -43,7 +43,9 @@ export default function TopTabsNavigator() {
       }}
     >
       {/* --- TAB DEFAULT TIDAK DIUBAH --- */}
-      <Tabs.Screen name="AllProducts" component={AllProducts} />
+      <Tabs.Screen name="AllProducts" component={AllProducts} options={{
+        title:'All'
+      }}/>
       <Tabs.Screen name="Populer" component={Populer} />
       <Tabs.Screen name="Terbaru" component={Terbaru} />
       <Tabs.Screen name="Diskon" component={Diskon} />

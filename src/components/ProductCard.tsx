@@ -4,20 +4,20 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface ProductCardProps {
   id: number;
-  name: string;
+  title: string;
   price: number;
   description: string;
-  image: string;
+  thumbnail: string;
   isDark?: boolean;
   cardWidth?: number; // 🆕 agar bisa menyesuaikan lebar
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
   id,
-  name,
+  title,
   price,
   description,
-  image,
+  thumbnail,
   isDark = false,
   cardWidth,
 }) => {
@@ -36,20 +36,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       onPress={() =>
         navigation.navigate('ProductDetail', {
           id,
-          name,
+          title,
           price,
           description,
-          image,
+          thumbnail,
           isDark,
         })
       }
     >
-      <Image source={{ uri: image }} style={styles.image} resizeMode="cover" />
+      <Image source={{ uri: thumbnail }} style={styles.image} resizeMode="cover" />
       <Text
         style={[styles.name, { color: isDark ? '#fff' : '#333' }]}
         numberOfLines={1}
       >
-        {name}
+        {title}
       </Text>
       <Text style={[styles.price, { color: isDark ? '#f5a623' : '#e67e22' }]}>
         Rp {price.toLocaleString('id-ID')}
