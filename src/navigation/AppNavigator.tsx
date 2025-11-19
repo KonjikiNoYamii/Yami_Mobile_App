@@ -1,24 +1,54 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
 import LoginScreen from '../screens/LoginScreen';
 import DrawerNavigator from './DrawerNavigator';
 import Checkout from '../screens/Checkout';
 import ProductDetail from '../components/ProductDetail';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+
+import * as Keychain from 'react-native-keychain';
+import { StorageService } from '../storage/storageService';
+import { STORAGE_KEYS } from '../storage/storageKeys';
 
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
-  const { isDark } = useTheme();
-  const { isLoggedIn, isLoading } = useAuth();
+  const { isDark, setThemeFromOutside } = useTheme() as any;
+  const { 
+    setTokenFromOutside,
+    isLoggedIn,
+    isLoading,
+    setIsLoading,
+  } = useAuth() as any;
 
-  // Saat masih cek token di storage → jangan render apa pun
+  // Load theme & token secara paralel
+  useEffect(() => {
+    const loadFromHybridStorage = async () => {
+      try {
+        const [tokenResult, themeResult] = await Promise.all([
+          Keychain.getGenericPassword({ service: 'com.ecom:userToken' }),
+          StorageService.get(STORAGE_KEYS.THEME),
+        ]);
+
+        if (tokenResult) setTokenFromOutside(tokenResult.password);
+        if (themeResult) setThemeFromOutside(themeResult === 'dark');
+      } catch (err) {
+        console.log('Storage load error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFromHybridStorage();
+  }, []);
+
   if (isLoading) return null;
 
   return (
     <Stack.Navigator
-      initialRouteName={isLoggedIn ? "Root" : "Login"}
       screenOptions={{
         headerShown: false,
         contentStyle: {
@@ -26,16 +56,12 @@ export default function AppNavigator() {
         },
       }}
     >
-
-      {!isLoggedIn ? (
-        // Jika belum login → tampilkan Login
-        <Stack.Screen name="Login" component={LoginScreen} />
-      ) : (
-        // Jika sudah login → tampilkan Root
+      {isLoggedIn ? (
         <Stack.Screen name="Root" component={DrawerNavigator} />
+      ) : (
+        <Stack.Screen name="Login" component={LoginScreen} />
       )}
 
-      {/* Tetap disiapkan karena dipakai di dalam Root */}
       <Stack.Screen
         name="Checkout"
         component={Checkout}

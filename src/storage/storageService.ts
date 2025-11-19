@@ -1,29 +1,43 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const StorageService = {
-  
-  // ambil beberapa key sekaligus
+  // multiGet
   multiGet: async (keys: string[]) => {
     try {
       const result = await AsyncStorage.multiGet(keys);
-      return Object.fromEntries(result);
+
+      const parsed: Record<string, any> = {};
+
+      result.forEach(([k, v]) => {
+        if (!v) return;
+        try {
+          parsed[k] = JSON.parse(v);
+        } catch {
+          parsed[k] = v; // bukan JSON → ambil mentah
+        }
+      });
+
+      return parsed;
     } catch (err) {
       console.error("MultiGet Error:", err);
       return {};
     }
   },
 
-  // set beberapa item sekaligus
-  multiSet: async (items: Record<string, string>) => {
+  // multiSet aman
+  multiSet: async (items: Record<string, any>) => {
     try {
-      const formatted = Object.entries(items);
+      const formatted = Object.entries(items).map(([k, v]) => [
+        k,
+        typeof v === "string" ? v : JSON.stringify(v),
+      ]);
       await AsyncStorage.multiSet(formatted);
     } catch (err) {
       console.error("MultiSet Error:", err);
     }
   },
 
-  // hapus banyak item sekaligus
+  // remove
   multiRemove: async (keys: string[]) => {
     try {
       await AsyncStorage.multiRemove(keys);
@@ -32,18 +46,24 @@ export const StorageService = {
     }
   },
 
-  // helper set
-  set: async (key: string, value: string) => {
-    await AsyncStorage.setItem(key, value);
+  // set
+  set: async (key: string, value: any) => {
+    const data = typeof value === "string" ? value : JSON.stringify(value);
+    await AsyncStorage.setItem(key, data);
   },
 
-  // helper get
+  // get
   get: async <T>(key: string): Promise<T | null> => {
-    const val = await AsyncStorage.getItem(key);
-    return val ? (JSON.parse(val) as T) : null;
+    const raw = await AsyncStorage.getItem(key);
+    if (!raw) return null;
+
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return raw as T;
+    }
   },
 
-  // helper remove
   remove: async (key: string) => {
     await AsyncStorage.removeItem(key);
   },
