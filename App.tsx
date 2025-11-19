@@ -36,7 +36,7 @@ export default function App() {
   }
 
   return (
-    <ErrorBoundary>
+    <ErrorBoundary> 
       <ProductProvider>
         <CartProvider>
           <AuthProvider>
