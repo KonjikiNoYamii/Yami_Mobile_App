@@ -29,7 +29,7 @@ export default function App() {
                 ProductsStack: {
                   screens: { Products: 'products' },
                 },
-                Profile: 'profile/:userId', // Support parameter profil
+                Profile: 'profile/:userId', 
               },
             },
             Settings: 'settings',
