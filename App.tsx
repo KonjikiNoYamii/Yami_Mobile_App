@@ -11,13 +11,40 @@ import { ProductProvider } from './src/context/ProductContext';
 import { StorageService } from './src/storage/storageService';
 import { STORAGE_KEYS } from './src/storage/storageKeys';
 import { initApiKey } from './src/api/initApiKey';
+import { Linking } from 'react-native';
+import { navigationRef } from './src/navigation/navigationRef';
 
 export default function App() {
-  const [initialTheme, setInitialTheme] = useState<'dark' | 'light' | null>(
-    null,
-  );
+  // --- Linking Config ---
+  const linking = {
+    prefixes: ['yamiapp://', 'https://yamiapp.com'],
+    config: {
+      screens: {
+        Login: 'login',
+        Root: {
+          screens: {
+            HomeTabs: {
+              screens: {
+                Home: 'home',
+                ProductsStack: {
+                  screens: { Products: 'products' },
+                },
+                Profile: 'profile/:userId', // Support parameter profil
+              },
+            },
+            Settings: 'settings',
+            CartScreen: 'keranjang',
+          },
+        },
+        ProductDetail: 'product/:id',
+        Checkout: 'checkout',
+      },
+    },
+  };
 
-  // 🔹 Load theme pertama kali
+  const [initialTheme, setInitialTheme] = useState<'dark' | 'light' | null>(null);
+
+  // --- Load theme pertama kali ---
   useEffect(() => {
     (async () => {
       const saved = await StorageService.get(STORAGE_KEYS.THEME);
@@ -25,25 +52,70 @@ export default function App() {
     })();
   }, []);
 
-  // 🔹 Init API Key sekali di awal
+  // --- Init API Key sekali di awal ---
   useEffect(() => {
     initApiKey();
   }, []);
 
-  // 🔹 Isi kosong dulu agar hook tidak berubah jumlahnya
-  if (initialTheme === null) {
-    return null;
-  }
+  // --- Deep Linking (Cold + Warm Start) ---
+  useEffect(() => {
+    const handleDeepLink = ({ url }: { url: string }) => {
+      if (!url) return;
+      const path = url.replace(/.*?:\/\//g, ''); // hapus scheme apa pun
+
+      // Product detail
+      if (path.startsWith('product/')) {
+        const id = path.split('/')[1];
+        if (id) {
+          navigationRef.current?.navigate('ProductDetail', { id });
+        } else {
+          navigationRef.current?.navigate('Root', { screen: 'HomeTabs', params: { screen: 'Home' } });
+        }
+      }
+
+      // Keranjang
+      else if (path === 'keranjang') {
+        navigationRef.current?.navigate('CartScreen');
+      }
+
+      // Home
+      else if (path === 'home') {
+        navigationRef.current?.navigate('Root', { screen: 'HomeTabs', params: { screen: 'Home' } });
+      }
+
+      // Profil dengan userId
+      else if (path.startsWith('profile/')) {
+        const userId = path.split('/')[1];
+        if (userId) {
+          navigationRef.current?.navigate('Profile', { userId });
+        } else {
+          navigationRef.current?.navigate('Root', { screen: 'HomeTabs', params: { screen: 'Home' } });
+        }
+      }
+    };
+
+    // --- Cold Start ---
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink({ url });
+    });
+
+    // --- Warm Start ---
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+    return () => subscription.remove();
+  }, []);
+
+  // Jangan render sebelum theme loaded
+  if (initialTheme === null) return null;
 
   return (
-    <ErrorBoundary> 
+    <ErrorBoundary>
       <ProductProvider>
         <CartProvider>
           <AuthProvider>
             <ThemeProvider initialTheme={initialTheme}>
               <ConnectionProvider>
                 <OfflineBannerWrapper />
-                <NavigationContainer>
+                <NavigationContainer linking={linking} ref={navigationRef}>
                   <AppNavigator />
                 </NavigationContainer>
               </ConnectionProvider>

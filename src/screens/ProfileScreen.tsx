@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,18 +12,36 @@ import {
 import { useUser } from '../context/UserContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNetInfo } from '../hooks/useNetInfo';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 
 export default function ProfileScreen() {
   const { userName, setUserName, userAvatar, setUserAvatar } = useUser();
   const { isDark } = useTheme();
   const { isOnline, connectionType } = useNetInfo();
+  const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+  const { logout } = useAuth();
 
+  // Ambil userId dari route.params (deep linking)
+  const { userId } = route.params || {};
+
+  // State form tetap dari context
   const [name, setName] = useState(userName);
   const [avatar, setAvatar] = useState(userAvatar);
-  const navigation = useNavigation<any>();
-  const { logout } = useAuth();
+
+  // Validasi userId dari deep link
+  useEffect(() => {
+    if (!userId) {
+      // Redirect ke Home jika userId tidak ada / invalid
+      navigation.replace('Root', { screen: 'HomeTabs', params: { screen: 'Home' } });
+    } else {
+      // Opsional: fetch data user berdasarkan userId dari server
+      // Contoh:
+      // setName(fetchedName);
+      // setAvatar(fetchedAvatar);
+    }
+  }, [userId]);
 
   return (
     <View
@@ -35,31 +53,28 @@ export default function ProfileScreen() {
       <View style={styles.avatarContainer}>
         <Image source={{ uri: avatar }} style={styles.avatar} />
 
-        <View style={{ alignItems: 'center', paddingVertical: 2 }}>
+        {/* Status koneksi seperti sebelumnya */}
+        <View style={styles.connectionContainer}>
           <Text
-            style={{
-              fontSize: 16,
-              fontWeight: '700',
-              color: isOnline ? '#4CAF50' : '#F44336', // ✅ langsung inline
-            }}
+            style={[
+              styles.statusText,
+              { color: isOnline ? '#4CAF50' : '#F44336' },
+            ]}
           >
             {isOnline ? '🟢 Online' : '🔴 Offline'}
           </Text>
           <Text
-            style={{
-              fontSize: 13,
-              marginTop: 2,
-              color: isDark ? '#ccc' : '#555', // ✅ langsung inline
-            }}
+            style={[
+              styles.connectionText,
+              { color: isDark ? '#ccc' : '#555' },
+            ]}
           >
             Jenis koneksi: {connectionType ?? 'Tidak diketahui'}
           </Text>
         </View>
       </View>
 
-      <Text style={[styles.label, { color: isDark ? '#fff' : '#000' }]}>
-        Nama
-      </Text>
+      <Text style={[styles.label, { color: isDark ? '#fff' : '#000' }]}>Nama</Text>
       <TextInput
         value={name}
         onChangeText={setName}
@@ -72,9 +87,7 @@ export default function ProfileScreen() {
         ]}
       />
 
-      <Text style={[styles.label, { color: isDark ? '#fff' : '#000' }]}>
-        Avatar URL
-      </Text>
+      <Text style={[styles.label, { color: isDark ? '#fff' : '#000' }]}>Avatar URL</Text>
       <TextInput
         value={avatar}
         onChangeText={setAvatar}
@@ -125,20 +138,18 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
-  // 🌐 Status koneksi di bawah avatar
-  // 🌐 Status koneksi di bawah avatar
+  // Status koneksi tetap seperti versi sebelumnya
   connectionContainer: {
     alignItems: 'center',
-    paddingVertical: 2, // lebih tipis karena transparan
+    paddingVertical: 2,
     paddingHorizontal: 6,
     borderRadius: 12,
-    backgroundColor: 'transparent', // ✅ transparan
+    backgroundColor: 'transparent', // transparan sesuai permintaan Master
     minWidth: 160,
   },
   statusText: {
     fontSize: 16,
     fontWeight: '700',
-    // textColor hijau/merah tetap, sesuai isOnline
   },
   connectionText: {
     fontSize: 13,
