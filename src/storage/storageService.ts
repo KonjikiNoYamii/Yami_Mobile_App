@@ -1,4 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const StorageService = {
   // multiGet
@@ -19,7 +19,7 @@ export const StorageService = {
 
       return parsed;
     } catch (err) {
-      console.error("MultiGet Error:", err);
+      console.error('MultiGet Error:', err);
       return {};
     }
   },
@@ -27,13 +27,13 @@ export const StorageService = {
   // multiSet aman
   multiSet: async (items: Record<string, any>) => {
     try {
-      const formatted = Object.entries(items).map(([k, v]) => [
-        k,
-        typeof v === "string" ? v : JSON.stringify(v),
-      ]);
+      const formatted: [string, string][] = Object.entries(items).map(
+        ([k, v]) => [k, typeof v === 'string' ? v : JSON.stringify(v)],
+      );
+
       await AsyncStorage.multiSet(formatted);
     } catch (err) {
-      console.error("MultiSet Error:", err);
+      console.error('MultiSet Error:', err);
     }
   },
 
@@ -42,13 +42,13 @@ export const StorageService = {
     try {
       await AsyncStorage.multiRemove(keys);
     } catch (err) {
-      console.error("MultiRemove Error:", err);
+      console.error('MultiRemove Error:', err);
     }
   },
 
   // set
   set: async (key: string, value: any) => {
-    const data = typeof value === "string" ? value : JSON.stringify(value);
+    const data = typeof value === 'string' ? value : JSON.stringify(value);
     await AsyncStorage.setItem(key, data);
   },
 

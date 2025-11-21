@@ -21,7 +21,7 @@ export function useCategoryProducts(category: string) {
     abortRef.current = controller;
 
     const net = await NetInfo.fetch();
-    setIsOnline(net.isConnected && net.isInternetReachable);
+    setIsOnline(!!net.isConnected && !!net.isInternetReachable);
 
     if (!net.isConnected) {
       setError("Anda sedang offline");

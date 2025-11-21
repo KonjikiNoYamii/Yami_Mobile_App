@@ -9,9 +9,6 @@ export const useProducts = () => {
   const [isOnline, setIsOnline] = useState(true);
   const [connectionType, setConnectionType] = useState<string | null>(null);
 
-  // ============================
-  // 🔥 Retry with Exponential Backoff
-  // ============================
   const retryFetch = async () => {
     let attempt = 0;
     let backoff = 1000; // 1 detik

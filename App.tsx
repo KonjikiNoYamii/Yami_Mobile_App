@@ -44,7 +44,6 @@ export default function App() {
 
   const [initialTheme, setInitialTheme] = useState<'dark' | 'light' | null>(null);
 
-  // --- Load theme pertama kali ---
   useEffect(() => {
     (async () => {
       const saved = await StorageService.get(STORAGE_KEYS.THEME);
@@ -52,7 +51,6 @@ export default function App() {
     })();
   }, []);
 
-  // --- Init API Key sekali di awal ---
   useEffect(() => {
     initApiKey();
   }, []);

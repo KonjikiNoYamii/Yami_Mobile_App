@@ -1,5 +1,3 @@
-// api/categoryService.ts
-
 import apiClient from "./apiClient";
 
 const CACHE_KEY = "categories_cache";
@@ -8,7 +6,7 @@ const TTL = 30 * 60 * 1000; // 30 menit
 export const fetchCategoriesWithCache = async () => {
   try {
     // 1. Cek cache di memory
-    const cached = globalThis[CACHE_KEY];
+    const cached = (globalThis as any)[CACHE_KEY];
 
     if (cached) {
       const isExpired = Date.now() - cached.timestamp > TTL;
@@ -25,7 +23,7 @@ export const fetchCategoriesWithCache = async () => {
     const data = res.data; // API ini return array langsung
 
     // 3. Simpan cache ke memory
-    globalThis[CACHE_KEY] = {
+    (globalThis as any)[CACHE_KEY] = {
       timestamp: Date.now(),
       data,
     };
