@@ -12,17 +12,14 @@ import { useAuth } from '../context/AuthContext';
 import * as Keychain from 'react-native-keychain';
 import { StorageService } from '../storage/storageService';
 import { STORAGE_KEYS } from '../storage/storageKeys';
+import ProtectedRoute from './ProtectedRoute';
 
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
   const { isDark, setThemeFromOutside } = useTheme() as any;
-  const { 
-    setTokenFromOutside,
-    isLoggedIn,
-    isLoading,
-    setIsLoading,
-  } = useAuth() as any;
+  const { setTokenFromOutside, isLoggedIn, isLoading, setIsLoading } =
+    useAuth() as any;
 
   // Load theme & token secara paralel
   useEffect(() => {
@@ -64,7 +61,6 @@ export default function AppNavigator() {
 
       <Stack.Screen
         name="Checkout"
-        component={Checkout}
         options={{
           presentation: 'modal',
           headerShown: true,
@@ -74,7 +70,13 @@ export default function AppNavigator() {
           },
           headerTintColor: isDark ? '#fff' : '#000',
         }}
-      />
+      >
+        {() => (
+          <ProtectedRoute>
+            <Checkout />
+          </ProtectedRoute>
+        )}
+      </Stack.Screen>
 
       <Stack.Screen
         name="ProductDetail"

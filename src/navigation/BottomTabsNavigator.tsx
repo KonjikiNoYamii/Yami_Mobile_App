@@ -34,6 +34,7 @@ export default function BottomTabsNavigator() {
         component={ProfileScreen}
         initialParams={{ userID }}
       />
+      
     </Tabs.Navigator>
   );
 }

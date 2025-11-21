@@ -1,6 +1,7 @@
 // context/CartContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import apiClient from "../api/apiClient";
 
 export interface CartItem {
   id: number;
@@ -12,15 +13,27 @@ export interface CartItem {
 interface CartContextType {
   cart: CartItem[];
   addToCart: (item: CartItem) => void;
+  addProductById: (id: number) => Promise<void>;
   updateQty: (id: number, qty: number) => void;
   removeItem: (id: number) => void;
   clearCart: () => void;
+  loadCartFromStorage: () => Promise<void>; // ← WAJIB untuk hydration
 }
 
 const CartContext = createContext<CartContextType | null>(null);
 
 export const CartProvider = ({ children }: any) => {
   const [cart, setCart] = useState<CartItem[]>([]);
+
+  const loadCartFromStorage = async () => {
+  const stored = await AsyncStorage.getItem("cart_data");
+  if (stored) setCart(JSON.parse(stored));
+};
+
+useEffect(() => {
+  loadCartFromStorage();
+}, []);
+
 
   // 🔹 Load from storage (multi-key di soal bagian C)
   useEffect(() => {
@@ -84,10 +97,25 @@ export const CartProvider = ({ children }: any) => {
     setCart([]);
     AsyncStorage.removeItem("cart_data");
   };
+  const addProductById = async (id: number) => {
+  try {
+    const res = await apiClient.get(`/products/${id}`);
+    const p = res.data;
+
+    addToCart({
+      id: p.id,
+      name: p.title,
+      price: p.price,
+      qty: 1,
+    });
+  } catch {
+    console.log("Gagal fetch product");
+  }
+};
 
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, updateQty, removeItem, clearCart }}
+      value={{ cart, addToCart, updateQty, removeItem, clearCart, addProductById, loadCartFromStorage }}
     >
       {children}
     </CartContext.Provider>

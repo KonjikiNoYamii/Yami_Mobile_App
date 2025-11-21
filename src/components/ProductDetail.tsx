@@ -10,57 +10,81 @@ import {
   ToastAndroid,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
-import { useProducts } from "../hooks/useProducts";
-import { useCart } from "../context/CartContext";
 import Ionicons from "@react-native-vector-icons/ionicons";
+import { getCache, setCache } from "../storage/cacheStorage";
+import { useCart } from "../context/CartContext";
+import {fetchWithRetry} from '../utils/fetchWithRetry'
 
 export default function ProductDetail() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
 
   const routeProduct = route.params;
-  const { products, loading, error } = useProducts();
   const { addToCart } = useCart();
 
   const [product, setProduct] = useState(routeProduct);
+  const [loading, setLoading] = useState(true);
 
+  const cacheKey = `product_${routeProduct.id}`;
+
+  // ==================================================
+  // 1. LOAD CACHE FIRST
+  // ==================================================
   useEffect(() => {
-    if (products.length > 0) {
-      const updated = products.find((p) => p.id === routeProduct.id);
+    (async () => {
+      const cached = await getCache(cacheKey);
 
-      if (updated) setProduct(updated);
-      else console.warn("Produk tidak ditemukan. Using route params.");
+      if (cached) {
+        console.log("📦 Loaded from cache:", cacheKey);
+        setProduct(cached);
+      }
+    })();
+  }, []);
+
+  // ==================================================
+  // 2. UPDATE FROM API → fetchWithRetry → SAVE CACHE
+  // ==================================================
+ useEffect(() => {
+  (async () => {
+    try {
+      const url = `https://dummyjson.com/products/${routeProduct.id}`;
+
+      const freshData = await fetchWithRetry(
+        () => fetch(url).then((res) => res.json()),
+        3
+      );
+
+      setProduct(freshData);
+      await setCache(cacheKey, freshData);
+
+      console.log("🔄 Updated from API:", cacheKey);
+    } catch (err) {
+      console.log("❌ API error, loading fallback...");
+
+      const cached = await getCache(cacheKey);
+      if (cached) {
+        ToastAndroid.show("Memuat dari cache...", ToastAndroid.SHORT);
+        setProduct(cached);
+      } else {
+        setProduct({
+          id: routeProduct.id,
+          title: "(Arsip) Produk Tidak Tersedia",
+          description: "Data cache tidak ditemukan dan API gagal diakses.",
+          price: 0,
+          thumbnail: "https://picsum.photos/400/300",
+        });
+      }
+    } finally {
+      setLoading(false);
     }
-  }, [products]);
+  })();
+}, [routeProduct.id]);
 
-  // ==========================
-  // ERROR HANDLING
-  // ==========================
-  useEffect(() => {
-    if (!error) return;
 
-    const status = error?.response?.status;
-
-    if (status === 404) console.log("ERROR 404: Produk tidak ditemukan");
-    else if (status === 500) console.log("ERROR 500: Server bermasalah");
-
-    ToastAndroid.show(
-      "Gagal memuat data terbaru. Menampilkan versi arsip.",
-      ToastAndroid.LONG
-    );
-
-    setProduct({
-      id: routeProduct.id,
-      name: "(Arsip) Produk Tidak Tersedia",
-      description:
-        "Data lokal digunakan karena gagal memuat data terbaru dari server.",
-      price: routeProduct.price ?? 0,
-      image: "https://picsum.photos/400/300",
-    });
-  }, [error]);
-
+  // ==================================================
   // THEME
-  const themeColors = {
+  // ==================================================
+  const theme = {
     bg: route.params.isDark ? "#1e1e1e" : "#f9f9f9",
     card: route.params.isDark ? "#2a2a2a" : "#fff",
     text: route.params.isDark ? "#fff" : "#222",
@@ -73,7 +97,7 @@ export default function ProductDetail() {
   const handleAddCart = () => {
     addToCart({
       id: product.id,
-      name: product.name,
+      name: product.title,
       price: product.price,
       qty: 1,
     });
@@ -82,14 +106,15 @@ export default function ProductDetail() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: themeColors.bg }]}>
+    <View style={[styles.container, { backgroundColor: theme.bg }]}>
+      {/* Back Button */}
       <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Ionicons name="chevron-back" size={26} color={themeColors.text} />
+        <Ionicons name="chevron-back" size={26} color={theme.text} />
       </Pressable>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {loading && (
-          <ActivityIndicator size="large" color={themeColors.price} />
+          <ActivityIndicator size="large" color={theme.price} />
         )}
 
         <Image
@@ -98,40 +123,32 @@ export default function ProductDetail() {
           resizeMode="cover"
         />
 
-        <View style={[styles.infoBox, { backgroundColor: themeColors.card }]}>
-          <Text style={[styles.name, { color: themeColors.text }]}>
+        <View style={[styles.infoBox, { backgroundColor: theme.card }]}>
+          <Text style={[styles.name, { color: theme.text }]}>
             {product.title}
           </Text>
 
-          <Text style={[styles.price, { color: themeColors.price }]}>
+          <Text style={[styles.price, { color: theme.price }]}>
             Rp {product.price?.toLocaleString("id-ID")}
           </Text>
 
-          <Text style={[styles.desc, { color: themeColors.desc }]}>
+          <Text style={[styles.desc, { color: theme.desc }]}>
             {product.description}
           </Text>
 
           {/* ADD TO CART */}
           <Pressable
-            style={[
-              styles.cartButton,
-              { backgroundColor: themeColors.buttonBg },
-            ]}
+            style={[styles.cartButton, { backgroundColor: theme.buttonBg }]}
             onPress={handleAddCart}
           >
-            <Text
-              style={[styles.cartText, { color: themeColors.buttonText }]}
-            >
+            <Text style={[styles.cartText, { color: theme.buttonText }]}>
               Tambah ke Keranjang
             </Text>
           </Pressable>
 
           {/* CHECKOUT */}
           <Pressable
-            style={[
-              styles.checkoutButton,
-              { backgroundColor: themeColors.buttonBg },
-            ]}
+            style={[styles.checkoutButton, { backgroundColor: theme.buttonBg }]}
             onPress={() =>
               navigation.navigate("Checkout", {
                 name: product.name,
@@ -140,9 +157,7 @@ export default function ProductDetail() {
               })
             }
           >
-            <Text
-              style={[styles.checkoutText, { color: themeColors.buttonText }]}
-            >
+            <Text style={[styles.checkoutText, { color: theme.buttonText }]}>
               Checkout
             </Text>
           </Pressable>
@@ -152,6 +167,9 @@ export default function ProductDetail() {
   );
 }
 
+// ==================================================
+// STYLES
+// ==================================================
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: { padding: 16, alignItems: "center" },

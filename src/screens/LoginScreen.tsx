@@ -15,13 +15,17 @@ const handleLogin = async () => {
     const result = await loginRequest(username, password);
 
     if (result.success) {
-      console.log("Token diterima:", result.token);
-
-      // Simpan token ke context (plus AsyncStorage)
       await login(result.token);
 
-      // TETAP kirim parameter userID
-      navigation.replace("Root", { userID: "U123" });
+      // ✅ CEK redirect
+      const redirectTo = (navigation as any).getParam?.("redirectTo");
+      const params = (navigation as any).getParam?.("params");
+
+      if (redirectTo) {
+        navigation.replace(redirectTo, params);
+      } else {
+        navigation.replace("Root", { userID: "U123" });
+      }
     } else {
       Alert.alert("Login gagal!", "Periksa username dan password Anda.");
     }
@@ -29,6 +33,7 @@ const handleLogin = async () => {
     Alert.alert("Error", error.message || "Gagal login");
   }
 };
+
 
 //username: 'emilys',
 //password: 'emilyspass',

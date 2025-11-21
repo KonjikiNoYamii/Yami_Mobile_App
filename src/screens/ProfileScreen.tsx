@@ -12,7 +12,7 @@ import {
 import { useUser } from '../context/UserContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNetInfo } from '../hooks/useNetInfo';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { CommonActions, useNavigation, useRoute } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 
 export default function ProfileScreen() {
@@ -34,12 +34,11 @@ export default function ProfileScreen() {
   useEffect(() => {
     if (!userId) {
       // Redirect ke Home jika userId tidak ada / invalid
-      navigation.replace('Root', { screen: 'HomeTabs', params: { screen: 'Home' } });
+      navigation.replace('Login');
     } else {
-      // Opsional: fetch data user berdasarkan userId dari server
-      // Contoh:
-      // setName(fetchedName);
-      // setAvatar(fetchedAvatar);
+      
+
+
     }
   }, [userId]);
 
@@ -109,15 +108,21 @@ export default function ProfileScreen() {
         }}
       />
 
-      <Pressable
-        onPress={() => {
-          logout();
-          navigation.navigate('Login');
-        }}
-        style={[styles.logoutButton, { backgroundColor: 'red' }]}
-      >
-        <Text style={{ color: 'white', fontWeight: '600' }}>Logout</Text>
-      </Pressable>
+<Pressable
+  onPress={async () => {
+    await logout(); // hapus token + storage
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      })
+    );
+  }}
+  style={[styles.logoutButton, { backgroundColor: 'red' }]}
+>
+  <Text style={{ color: 'white', fontWeight: '600' }}>Logout</Text>
+</Pressable>
+
     </View>
   );
 }

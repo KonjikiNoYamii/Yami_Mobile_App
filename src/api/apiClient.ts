@@ -2,10 +2,6 @@ import axios, { AxiosResponse } from "axios";
 import NetInfo from "@react-native-community/netinfo";
 import * as Keychain from "react-native-keychain";
 
-/* ========================================================
-   SIMPAN API KEY KE KEYCHAIN
-   Dipanggil sekali saat App start
-======================================================== */
 export async function saveApiKeySecret() {
   try {
     await Keychain.setGenericPassword(
@@ -21,21 +17,12 @@ export async function saveApiKeySecret() {
   }
 }
 
-/* ========================================================
-   CLIENT AXIOS
-======================================================== */
 const apiClient = axios.create({
   baseURL: "https://dummyjson.com",
   timeout: 7000,
   headers: { Accept: "application/json" },
 });
 
-/* ========================================================
-   REQUEST INTERCEPTOR
-   - Cek internet
-   - Ambil API KEY dari Keychain
-   - Set ke header (X-API-Key)
-======================================================== */
 apiClient.interceptors.request.use(
   async (config) => {
     // Check internet
@@ -66,12 +53,6 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-/* ========================================================
-   RESPONSE INTERCEPTOR
-   - Validasi error 400
-   - Timeout
-   - Simulated token untuk login
-======================================================== */
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
     // Untuk simulasi login
@@ -86,7 +67,6 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Validation error
     if (error.response?.status === 400) {
       return Promise.reject({
         type: "VALIDATION_ERROR",

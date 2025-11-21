@@ -6,25 +6,26 @@ interface ThemeType {
   isDark: boolean;
   toggleTheme: () => void;
   setThemeFromOutside: (mode: "dark" | "light") => void;
+  loadThemeFromStorage: () => Promise<void>; // ← WAJIB untuk hydrasi
 }
 
 const ThemeContext = createContext<ThemeType>({
   isDark: false,
   toggleTheme: () => {},
   setThemeFromOutside: () => {},
+  loadThemeFromStorage: async () => {},
 });
 
 export const ThemeProvider = ({ children, initialTheme }: { children: ReactNode, initialTheme: "dark" | "light" }) => {
   const [isDark, setIsDark] = useState(initialTheme === "dark");
 
+  const loadThemeFromStorage = async () => {
+    const mode = await StorageService.get<string>(STORAGE_KEYS.THEME);
+    if (mode) setIsDark(mode === "dark");
+  };
+
   useEffect(() => {
-    const loadTheme = async () => {
-      const mode = await StorageService.get<string>(STORAGE_KEYS.THEME);
-      if (mode) {
-        setIsDark(mode === "dark");
-      }
-    };
-    loadTheme();
+    loadThemeFromStorage();
   }, []);
 
   const toggleTheme = async () => {
@@ -38,7 +39,7 @@ export const ThemeProvider = ({ children, initialTheme }: { children: ReactNode,
   };
 
   return (
-    <ThemeContext.Provider value={{ isDark, toggleTheme, setThemeFromOutside }}>
+    <ThemeContext.Provider value={{ isDark, toggleTheme, setThemeFromOutside, loadThemeFromStorage }}>
       {children}
     </ThemeContext.Provider>
   );
