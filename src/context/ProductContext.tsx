@@ -29,7 +29,13 @@ interface ProductContextType {
   loadCategory: (category: string) => Promise<void>;
   refresh: () => Promise<void>;
   loadProductsFromStorage: () => Promise<void>;
+
+  addProduct: (data: Omit<Product, "id">) => Promise<Product>;
+
+  // ★ Anda minta type deleteProduct → ini dia
+  deleteProduct: (id: number) => void;
 }
+
 
 const ProductContext = createContext<ProductContextType | null>(null);
 
@@ -71,7 +77,6 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
 
       let cachedProducts: Product[] | null = null;
 
-      // Parsing dengan handling corrupt
       if (cachedRaw) {
         try {
           cachedProducts = JSON.parse(cachedRaw);
@@ -89,11 +94,9 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
         return;
       }
 
-      // Ambil dari API
       const res = await retryFetch(() => apiClient.get("/products"));
       setProducts(res.data.products);
 
-      // Simpan ke storage (pastikan stringify)
       await StorageService.set("products_cache", JSON.stringify(res.data.products));
       await StorageService.set("products_cache_time", Date.now().toString());
     } catch (err: any) {
@@ -168,6 +171,49 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
     }
   };
 
+  // ============================================================
+  // ★ ★ ★ FITUR BARUUU — ADD PRODUCT
+  // ============================================================
+const addProduct = async (data: Product) => {
+  try {
+    // Jika produk custom → langsung simpan ke local tanpa API
+    if (data.isCustom) {
+      setProducts(prev => {
+        const updated = [data, ...prev];
+        StorageService.set("products_cache", JSON.stringify(updated));
+        return updated;
+      });
+
+      setTerbaru(prev => [data, ...prev]);
+      return data;
+    }
+
+    // Jika bukan custom → baru pakai API
+    const res = await apiClient.post("/products/add", data);
+    const created: Product = res.data;
+
+    setProducts(prev => {
+      const updated = [created, ...prev];
+      StorageService.set("products_cache", JSON.stringify(updated));
+      return updated;
+    });
+
+    setTerbaru(prev => [created, ...prev]);
+
+    return created;
+  } catch (err) {
+    console.log("Gagal menambah produk:", err);
+    throw err;
+  }
+};
+
+const deleteProduct = (id: number) => {
+  setProducts((prev) => prev.filter((p) => p.id !== id));
+};
+
+
+
+  // Listener jaringan
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
       const online = state.isConnected && state.isInternetReachable;
@@ -195,6 +241,8 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
         loadProductsFromStorage,
         isOnline,
         connectionType,
+        deleteProduct,
+        addProduct,
       }}
     >
       {children}

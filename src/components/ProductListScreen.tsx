@@ -17,7 +17,7 @@ interface ProductListScreenProps {
   loading?: boolean;
   error?: string | null;
   title?: string;
-  fetchData?: () => Promise<void>; // opsional untuk pull-to-refresh
+  fetchData?: () => Promise<void>;
   emptyMessage?: string;
 }
 
@@ -46,7 +46,6 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
     }
   };
 
-  // Loading state
   if (loading)
     return (
       <View style={styles.center}>
@@ -57,7 +56,6 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
       </View>
     );
 
-  // Error state
   if (error)
     return (
       <View style={styles.center}>
@@ -79,7 +77,6 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
       </View>
     );
 
-  // Empty state
   if (!products || products.length === 0)
     return (
       <View style={styles.center}>
@@ -89,14 +86,9 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
       </View>
     );
 
-  // Render FlatList
   return (
     <View style={[styles.container, { backgroundColor: isDark ? "#1c1c1c" : "#fff" }]}>
-      {title && (
-        <Text style={[styles.title, { color: isDark ? "#fff" : "#333" }]}>
-          {title}
-        </Text>
-      )}
+      {title && <Text style={[styles.title, { color: isDark ? "#fff" : "#333" }]}>{title}</Text>}
       <FlatList
         data={products}
         key={numColumns}
@@ -110,16 +102,15 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
             id={item.id}
             title={item.title}
             price={item.price}
-            thumbnail={item.thumbnail}
             description={item.description}
+            thumbnail={item.thumbnail}
+            images={item.images}
             isDark={isDark}
             cardWidth={cardWidth}
           />
         )}
         refreshControl={
-          fetchData ? (
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          ) : undefined
+          fetchData ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> : undefined
         }
       />
     </View>

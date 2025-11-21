@@ -13,6 +13,8 @@ import * as Keychain from 'react-native-keychain';
 import { StorageService } from '../storage/storageService';
 import { STORAGE_KEYS } from '../storage/storageKeys';
 import ProtectedRoute from './ProtectedRoute';
+import CreateProductScreen from '../screens/CreateProductScreen';
+import CompleteProfileScreen from '../screens/CompleteProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -91,6 +93,22 @@ export default function AppNavigator() {
           headerTintColor: isDark ? '#fff' : '#000',
         }}
       />
+      <Stack.Screen
+        name="CreateProduct"
+        component={CreateProductScreen}
+        options={{
+          headerShown: true,
+          title: 'Tambah Produk',
+          headerStyle: {
+            backgroundColor: isDark ? '#1f1f1f' : '#f8f8f8',
+          },
+          headerTintColor: isDark ? '#fff' : '#000',
+        }}
+      />
+      <Stack.Screen name='CompleteProfile' component={CompleteProfileScreen} options={{
+        headerShown:true,
+        title:'Profile Anda'
+      }}/>
     </Stack.Navigator>
   );
 }

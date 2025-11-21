@@ -5,6 +5,7 @@ import { AuthProvider } from "../context/AuthContext";
 import { CartProvider } from "../context/CartContext";
 import { ProductProvider } from "../context/ProductContext";
 import { ConnectionProvider } from "../context/ConnectionContext";
+import { UserProvider } from "../context/UserContext";
 
 interface Props {
   children: React.ReactNode;
@@ -16,7 +17,9 @@ const Providers = ({ children, initialTheme }: Props) => (
     <AuthProvider>
       <CartProvider>
         <ProductProvider>
-            <ConnectionProvider>{children}</ConnectionProvider>
+            <UserProvider userID="U123">
+              <ConnectionProvider>{children}</ConnectionProvider>
+            </UserProvider>
         </ProductProvider>
       </CartProvider>
     </AuthProvider>

@@ -1,179 +1,114 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Button,
-  StyleSheet,
-  Alert,
-  Image,
-  Pressable,
-} from 'react-native';
+import React from 'react';
+import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
 import { useUser } from '../context/UserContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNetInfo } from '../hooks/useNetInfo';
-import { CommonActions, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 
 export default function ProfileScreen() {
-  const { userName, setUserName, userAvatar, setUserAvatar } = useUser();
+  const { userName, userAvatar } = useUser(); // <-- pakai context
   const { isDark } = useTheme();
   const { isOnline, connectionType } = useNetInfo();
   const navigation = useNavigation<any>();
-  const route = useRoute<any>();
   const { logout } = useAuth();
 
-  // Ambil userId dari route.params (deep linking)
-  const { userId } = route.params || {};
-
-  // State form tetap dari context
-  const [name, setName] = useState(userName);
-  const [avatar, setAvatar] = useState(userAvatar);
-
-  // Validasi userId dari deep link
-  useEffect(() => {
-    if (!userId) {
-      // Redirect ke Home jika userId tidak ada / invalid
-      navigation.replace('Login');
-    } else {
-      
-
-
-    }
-  }, [userId]);
-
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9' },
-      ]}
-    >
+    <View style={[styles.container, { backgroundColor: isDark ? '#121212' : '#f5f5f5' }]}>
+      {/* Avatar & Nama */}
       <View style={styles.avatarContainer}>
-        <Image source={{ uri: avatar }} style={styles.avatar} />
+        <Image source={{ uri: userAvatar }} style={styles.avatar} />
+        <Text style={[styles.userName, { color: isDark ? '#fff' : '#000' }]}>{userName}</Text>
 
-        {/* Status koneksi seperti sebelumnya */}
+        {/* Status koneksi */}
         <View style={styles.connectionContainer}>
-          <Text
-            style={[
-              styles.statusText,
-              { color: isOnline ? '#4CAF50' : '#F44336' },
-            ]}
-          >
+          <Text style={[styles.statusText, { color: isOnline ? '#4CAF50' : '#F44336' }]}>
             {isOnline ? '🟢 Online' : '🔴 Offline'}
           </Text>
-          <Text
-            style={[
-              styles.connectionText,
-              { color: isDark ? '#ccc' : '#555' },
-            ]}
-          >
+          <Text style={[styles.connectionText, { color: isDark ? '#ccc' : '#555' }]}>
             Jenis koneksi: {connectionType ?? 'Tidak diketahui'}
           </Text>
         </View>
       </View>
 
-      <Text style={[styles.label, { color: isDark ? '#fff' : '#000' }]}>Nama</Text>
-      <TextInput
-        value={name}
-        onChangeText={setName}
-        style={[
-          styles.input,
-          {
-            backgroundColor: isDark ? '#333' : '#fff',
-            color: isDark ? '#fff' : '#000',
-          },
-        ]}
-      />
+      {/* Tombol Lengkapi Profil */}
+      <Pressable
+        style={styles.primaryButton}
+        onPress={() => navigation.navigate('CompleteProfile')}
+      >
+        <Text style={styles.primaryButtonText}>Lengkapi Profil</Text>
+      </Pressable>
 
-      <Text style={[styles.label, { color: isDark ? '#fff' : '#000' }]}>Avatar URL</Text>
-      <TextInput
-        value={avatar}
-        onChangeText={setAvatar}
-        style={[
-          styles.input,
-          {
-            backgroundColor: isDark ? '#333' : '#fff',
-            color: isDark ? '#fff' : '#000',
-          },
-        ]}
-      />
+      {/* Tombol Tambah Produk */}
+      <Pressable
+        style={styles.secondaryButton}
+        onPress={() => navigation.navigate('CreateProduct')}
+      >
+        <Text style={styles.secondaryButtonText}>Tambah Produk</Text>
+      </Pressable>
 
-      <Button
-        title="Simpan"
-        onPress={() => {
-          setUserName(name);
-          setUserAvatar(avatar);
-          Alert.alert('Profil sudah diubah!');
+      {/* Tombol Logout */}
+      <Pressable
+        style={[styles.secondaryButton, { backgroundColor: '#e74c3c' }]}
+        onPress={async () => {
+          await logout();
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            })
+          );
         }}
-      />
-
-<Pressable
-  onPress={async () => {
-    await logout(); // hapus token + storage
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [{ name: 'Login' }],
-      })
-    );
-  }}
-  style={[styles.logoutButton, { backgroundColor: 'red' }]}
->
-  <Text style={{ color: 'white', fontWeight: '600' }}>Logout</Text>
-</Pressable>
-
+      >
+        <Text style={styles.secondaryButtonText}>Logout</Text>
+      </Pressable>
     </View>
   );
 }
 
+
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
+  container: { flex: 1, padding: 20, alignItems: 'center' },
 
   avatarContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 40,
+    padding: 20,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    width: '100%',
   },
-  avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 2,
-    borderColor: '#ddd',
-    marginBottom: 12,
-  },
+  avatar: { width: 120, height: 120, borderRadius: 60, marginBottom: 12 },
+  userName: { fontSize: 22, fontWeight: '700', marginBottom: 8 },
 
-  // Status koneksi tetap seperti versi sebelumnya
   connectionContainer: {
+    marginTop: 8,
     alignItems: 'center',
-    paddingVertical: 2,
-    paddingHorizontal: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     borderRadius: 12,
-    backgroundColor: 'transparent', // transparan sesuai permintaan Master
-    minWidth: 160,
+    backgroundColor: 'rgba(0,0,0,0.1)',
   },
-  statusText: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  connectionText: {
-    fontSize: 13,
-    marginTop: 2,
-  },
+  statusText: { fontSize: 16, fontWeight: '600' },
+  connectionText: { fontSize: 13, marginTop: 2 },
 
-  label: { fontWeight: 'bold', marginBottom: 6 },
-  input: {
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#ccc',
-  },
-
-  logoutButton: {
-    marginTop: 24,
-    padding: 12,
-    borderRadius: 8,
+  primaryButton: {
+    width: '90%',
+    padding: 14,
+    backgroundColor: '#007bff',
+    borderRadius: 12,
     alignItems: 'center',
+    marginBottom: 16,
   },
+  primaryButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+
+  secondaryButton: {
+    width: '90%',
+    padding: 14,
+    backgroundColor: '#2ecc71',
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  secondaryButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 });

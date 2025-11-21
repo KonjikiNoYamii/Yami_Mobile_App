@@ -9,7 +9,6 @@ const Tabs = createBottomTabNavigator();
 
 export default function BottomTabsNavigator() {
   const route = useRoute<any>();
-  const { userID } = route.params;
 
   const { isDark } = useTheme();
 
@@ -32,7 +31,6 @@ export default function BottomTabsNavigator() {
       <Tabs.Screen
         name="Profile"
         component={ProfileScreen}
-        initialParams={{ userID }}
       />
       
     </Tabs.Navigator>
