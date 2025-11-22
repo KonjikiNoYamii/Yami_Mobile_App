@@ -2,21 +2,6 @@ import axios, { AxiosResponse } from "axios";
 import NetInfo from "@react-native-community/netinfo";
 import * as Keychain from "react-native-keychain";
 
-export async function saveApiKeySecret() {
-  try {
-    await Keychain.setGenericPassword(
-      "api_client",                // username statis
-      "API_KEY_SECRET_XYZ",        // API Key rahasia
-      { service: "com.ecom:apiKey" }
-    );
-    console.log("API Key berhasil disimpan.");
-    return true;
-  } catch (err) {
-    console.log("Gagal menyimpan API Key:", err);
-    return false;
-  }
-}
-
 const apiClient = axios.create({
   baseURL: "https://dummyjson.com",
   timeout: 7000,

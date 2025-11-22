@@ -4,4 +4,6 @@ export const STORAGE_KEYS = {
   NOTIF: "notif_status",
   WISHLIST_IDS: "wishlist_ids",
   WISHLIST_META: "wishlist_meta",
+  LAST_LOGIN: "last_login",
+
 };

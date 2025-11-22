@@ -56,11 +56,27 @@ export default function AppNavigator() {
       }}
     >
       {isLoggedIn ? (
-        <Stack.Screen name="Root" component={DrawerNavigator} />
-      ) : (
-        <Stack.Screen name="Login" component={LoginScreen} />
-      )}
+        <>
+          <Stack.Screen name="Root" component={DrawerNavigator} />
 
+          {/* LOGIN SEBAGAI MODAL */}
+          <Stack.Screen
+            name="Login"
+            component={LoginScreen}
+            options={{
+              headerShown: false,
+              presentation: 'modal',
+            }}
+          />
+        </>
+      ) : (
+        /* LOGIN SEBAGAI SCREEN UTAMA */
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+          options={{ headerShown: false }}
+        />
+      )}
       <Stack.Screen
         name="Checkout"
         options={{
@@ -105,10 +121,14 @@ export default function AppNavigator() {
           headerTintColor: isDark ? '#fff' : '#000',
         }}
       />
-      <Stack.Screen name='CompleteProfile' component={CompleteProfileScreen} options={{
-        headerShown:true,
-        title:'Profile Anda'
-      }}/>
+      <Stack.Screen
+        name="CompleteProfile"
+        component={CompleteProfileScreen}
+        options={{
+          headerShown: true,
+          title: 'Profile Anda',
+        }}
+      />
     </Stack.Navigator>
   );
 }

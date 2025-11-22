@@ -1,10 +1,12 @@
 import React from 'react';
-import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Image, Pressable, StyleSheet, Alert } from 'react-native';
 import { useUser } from '../context/UserContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNetInfo } from '../hooks/useNetInfo';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
+import { StorageService } from '../storage/storageService';
+import { STORAGE_KEYS } from '../storage/storageKeys';
 
 export default function ProfileScreen() {
   const { userName, userAvatar } = useUser(); // <-- pakai context
@@ -14,22 +16,51 @@ export default function ProfileScreen() {
   const { logout } = useAuth();
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#121212' : '#f5f5f5' }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? '#121212' : '#f5f5f5' },
+      ]}
+    >
       {/* Avatar & Nama */}
       <View style={styles.avatarContainer}>
         <Image source={{ uri: userAvatar }} style={styles.avatar} />
-        <Text style={[styles.userName, { color: isDark ? '#fff' : '#000' }]}>{userName}</Text>
+        <Text style={[styles.userName, { color: isDark ? '#fff' : '#000' }]}>
+          {userName}
+        </Text>
 
         {/* Status koneksi */}
         <View style={styles.connectionContainer}>
-          <Text style={[styles.statusText, { color: isOnline ? '#4CAF50' : '#F44336' }]}>
+          <Text
+            style={[
+              styles.statusText,
+              { color: isOnline ? '#4CAF50' : '#F44336' },
+            ]}
+          >
             {isOnline ? '🟢 Online' : '🔴 Offline'}
           </Text>
-          <Text style={[styles.connectionText, { color: isDark ? '#ccc' : '#555' }]}>
+          <Text
+            style={[styles.connectionText, { color: isDark ? '#ccc' : '#555' }]}
+          >
             Jenis koneksi: {connectionType ?? 'Tidak diketahui'}
           </Text>
         </View>
       </View>
+      <Pressable
+        style={[styles.secondaryButton, { backgroundColor: '#9b59b6' }]}
+        onPress={async () => {
+          const lastUser = await StorageService.get(STORAGE_KEYS.LAST_LOGIN);
+
+          if (!lastUser) {
+            Alert.alert('Belum Ada Login Cepat', 'Silakan login dulu.');
+            return;
+          }
+
+          navigation.navigate('Login', { quickUser: lastUser });
+        }}
+      >
+        <Text style={styles.secondaryButtonText}>Login Cepat</Text>
+      </Pressable>
 
       {/* Tombol Lengkapi Profil */}
       <Pressable
@@ -56,7 +87,7 @@ export default function ProfileScreen() {
             CommonActions.reset({
               index: 0,
               routes: [{ name: 'Login' }],
-            })
+            }),
           );
         }}
       >
@@ -65,7 +96,6 @@ export default function ProfileScreen() {
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, alignItems: 'center' },

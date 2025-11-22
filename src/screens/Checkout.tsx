@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useCart } from "../context/CartContext";
 import { useTheme } from "../context/ThemeContext";
+import { processPayment } from "../services/paymentService";
 
 // Fungsi pengganti toLocaleString
 function formatNumber(number?: number | null) {
@@ -26,24 +27,13 @@ export default function Checkout() {
 
   const total = cart.reduce((a, b) => a + b.price * b.qty, 0);
 
-  const handlePay = () => {
-    if (!alamat.trim()) return Alert.alert("Alamat wajib diisi!");
+const handlePay = async () => {
+  if (!alamat.trim()) {
+    return Alert.alert("Alamat wajib diisi!");
+  }
 
-    Alert.alert(
-      "Konfirmasi Pembayaran",
-      "Yakin ingin lanjut?",
-      [
-        { text: "Batal" },
-        {
-          text: "Bayar",
-          onPress: () => {
-            clearCart();
-            Alert.alert("Sukses", "Pesanan berhasil dibuat!");
-          },
-        },
-      ]
-    );
-  };
+  await processPayment(total, clearCart);
+};
 
   return (
     <ScrollView

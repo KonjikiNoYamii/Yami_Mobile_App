@@ -193,7 +193,7 @@ export default function CompleteProfileScreen() {
         {ktpPhoto ? (
           <Image source={{ uri: ktpPhoto.uri }} style={styles.ktpImage} />
         ) : (
-          <Text style={{ color: isDark ? "#ccc" : "#555", marginTop: 5 }}>Belum ada foto</Text>
+          <Text style={{ color: isDark ? "#ffffffff" : "#000000ff", marginTop: 5 }}>Belum ada foto</Text>
         )}
         {uploadingKTP && <ActivityIndicator style={styles.ktpOverlay} color="#fff" />}
       </Pressable>

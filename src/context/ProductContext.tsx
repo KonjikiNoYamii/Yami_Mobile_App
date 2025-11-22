@@ -1,8 +1,8 @@
 // context/ProductContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import NetInfo from "@react-native-community/netinfo";
-import apiClient from "../api/apiClient";
 import { StorageService } from "../storage/storageService";
+import { fetchProducts } from "../api/productService";
 
 export interface Product {
   id: number;
@@ -13,6 +13,7 @@ export interface Product {
   discountPercentage: number;
   thumbnail: string;
   category: string;
+  isCustom?: boolean;
 }
 
 interface ProductContextType {
@@ -29,13 +30,9 @@ interface ProductContextType {
   loadCategory: (category: string) => Promise<void>;
   refresh: () => Promise<void>;
   loadProductsFromStorage: () => Promise<void>;
-
   addProduct: (data: Omit<Product, "id">) => Promise<Product>;
-
-  // ★ Anda minta type deleteProduct → ini dia
   deleteProduct: (id: number) => void;
 }
-
 
 const ProductContext = createContext<ProductContextType | null>(null);
 
@@ -50,39 +47,25 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
   const [isOnline, setIsOnline] = useState(true);
   const [connectionType, setConnectionType] = useState<string | null>(null);
 
-  const CACHE_DURATION = 5 * 60 * 1000;
+  const CACHE_KEY = "products_cache";
+  const CACHE_TIME_KEY = "products_cache_time";
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 menit
 
-  const retryFetch = async (fetchFn: () => Promise<any>, attempts = 3) => {
-    let attempt = 0;
-    let backoff = 1000;
-    while (attempt < attempts) {
-      try {
-        return await fetchFn();
-      } catch (err) {
-        attempt++;
-        if (attempt >= attempts) throw err;
-        await new Promise((res) => setTimeout(res as any, backoff));
-        backoff *= 2;
-      }
-    }
-  };
-
-  // ==============================
-  // Load utama + handle corrupt storage
-  // ==============================
+  // ===========================
+  // Load Products + Cache
+  // ===========================
   const loadAllProducts = async () => {
     try {
-      const cachedRaw = await StorageService.get<string>("products_cache");
-      const cacheTimeRaw = await StorageService.get<string>("products_cache_time");
+      const cachedRaw = await StorageService.get<string>(CACHE_KEY);
+      const cacheTimeRaw = await StorageService.get<string>(CACHE_TIME_KEY);
 
       let cachedProducts: Product[] | null = null;
-
       if (cachedRaw) {
         try {
           cachedProducts = JSON.parse(cachedRaw);
         } catch (err) {
           console.error("Corrupted product cache detected, removing…", err);
-          await StorageService.remove("products_cache");
+          await StorageService.remove(CACHE_KEY);
           cachedProducts = null;
         }
       }
@@ -91,67 +74,59 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
 
       if (cachedProducts && Date.now() - cacheTime < CACHE_DURATION) {
         setProducts(cachedProducts);
+        processDerivedData(cachedProducts);
         return;
       }
 
-      const res = await retryFetch(() => apiClient.get("/products"));
-      setProducts(res.data.products);
+      // Ambil dari productService
+      const controller = new AbortController();
+      const fetchedProducts = await fetchProducts(controller.signal);
 
-      await StorageService.set("products_cache", JSON.stringify(res.data.products));
-      await StorageService.set("products_cache_time", Date.now().toString());
+      setProducts(fetchedProducts);
+      processDerivedData(fetchedProducts);
+
+      await StorageService.set(CACHE_KEY, JSON.stringify(fetchedProducts));
+      await StorageService.set(CACHE_TIME_KEY, Date.now().toString());
     } catch (err: any) {
       setError("Gagal memuat produk utama");
-      console.log("LoadAllProducts Error:", err);
+      console.error("loadAllProducts error:", err);
     }
   };
 
-  const loadPopuler = async () => {
-    try {
-      const res = await retryFetch(
-        () => apiClient.get("/products?sortBy=rating&order=desc&limit=20")
-      );
-      setPopuler(res.data.products);
-    } catch (_) {}
-  };
-
-  const loadTerbaru = async () => {
-    try {
-      const res = await retryFetch(
-        () => apiClient.get("/products?sortBy=id&order=desc&limit=20")
-      );
-      setTerbaru(res.data.products);
-    } catch (_) {}
-  };
-
-  const loadDiskon = async () => {
-    try {
-      const res = await retryFetch(
-        () => apiClient.get("/products?sortBy=discountPercentage&order=desc&limit=20")
-      );
-      setDiskon(res.data.products);
-    } catch (_) {}
+  // ===========================
+  // Derived Data: Populer, Terbaru, Diskon, CategoryMap
+  // ===========================
+  const processDerivedData = (allProducts: Product[]) => {
+    setPopuler([...allProducts].sort((a, b) => b.rating - a.rating).slice(0, 20));
+    setTerbaru([...allProducts].sort((a, b) => b.id - a.id).slice(0, 20));
+    setDiskon(allProducts.filter(p => p.discountPercentage > 0).sort((a, b) => b.discountPercentage - a.discountPercentage));
+    
+    const map: Record<string, Product[]> = {};
+    allProducts.forEach(p => {
+      if (!map[p.category]) map[p.category] = [];
+      map[p.category].push(p);
+    });
+    setCategoryMap(map);
   };
 
   const loadCategory = async (category: string) => {
-    try {
-      if (categoryMap[category]) return;
-
-      const res = await retryFetch(() => apiClient.get(`/products/category/${category}`));
-      setCategoryMap((prev) => ({ ...prev, [category]: res.data.products }));
-    } catch (_) {}
+    if (categoryMap[category]) return;
+    const filtered = products.filter(p => p.category === category);
+    setCategoryMap(prev => ({ ...prev, [category]: filtered }));
   };
 
   const loadProductsFromStorage = async () => {
     try {
-      const raw = await StorageService.get<string>("products_cache");
+      const raw = await StorageService.get<string>(CACHE_KEY);
       if (!raw) return;
 
       try {
         const parsed: Product[] = JSON.parse(raw);
         setProducts(parsed);
+        processDerivedData(parsed);
       } catch (err) {
         console.error("Corrupted storage detected during hydration, clearing…", err);
-        await StorageService.remove("products_cache");
+        await StorageService.remove(CACHE_KEY);
         setProducts([]);
       }
     } catch (err) {
@@ -162,7 +137,7 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
   const refresh = async () => {
     setLoading(true);
     try {
-      await Promise.all([loadAllProducts(), loadPopuler(), loadTerbaru(), loadDiskon()]);
+      await loadAllProducts();
       setError(null);
     } catch (err: any) {
       setError(err.message);
@@ -171,49 +146,42 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
     }
   };
 
-  // ============================================================
-  // ★ ★ ★ FITUR BARUUU — ADD PRODUCT
-  // ============================================================
-const addProduct = async (data: Product) => {
-  try {
-    // Jika produk custom → langsung simpan ke local tanpa API
-    if (data.isCustom) {
-      setProducts(prev => {
-        const updated = [data, ...prev];
-        StorageService.set("products_cache", JSON.stringify(updated));
-        return updated;
-      });
+  // ===========================
+  // Add / Delete Product
+  // ===========================
+  const addProduct = async (data: Product) => {
+    try {
+      // Simpan ke local langsung jika custom
+      if (data.isCustom) {
+        setProducts(prev => {
+          const updated = [data, ...prev];
+          StorageService.set(CACHE_KEY, JSON.stringify(updated));
+          return updated;
+        });
+        processDerivedData([data, ...products]);
+        return data;
+      }
 
-      setTerbaru(prev => [data, ...prev]);
+      console.warn("Non-custom products harus menggunakan API untuk create, ini placeholder.");
       return data;
+    } catch (err) {
+      console.error("Gagal menambah produk:", err);
+      throw err;
     }
+  };
 
-    // Jika bukan custom → baru pakai API
-    const res = await apiClient.post("/products/add", data);
-    const created: Product = res.data;
-
+  const deleteProduct = (id: number) => {
     setProducts(prev => {
-      const updated = [created, ...prev];
-      StorageService.set("products_cache", JSON.stringify(updated));
+      const updated = prev.filter(p => p.id !== id);
+      StorageService.set(CACHE_KEY, JSON.stringify(updated));
+      processDerivedData(updated);
       return updated;
     });
+  };
 
-    setTerbaru(prev => [created, ...prev]);
-
-    return created;
-  } catch (err) {
-    console.log("Gagal menambah produk:", err);
-    throw err;
-  }
-};
-
-const deleteProduct = (id: number) => {
-  setProducts((prev) => prev.filter((p) => p.id !== id));
-};
-
-
-
+  // ===========================
   // Listener jaringan
+  // ===========================
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
       const online = state.isConnected && state.isInternetReachable;
