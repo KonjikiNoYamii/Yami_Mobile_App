@@ -1,6 +1,28 @@
+// api/apiClient.ts
 import axios, { AxiosResponse } from "axios";
 import NetInfo from "@react-native-community/netinfo";
 import * as Keychain from "react-native-keychain";
+import { generateApiKey } from "../utils/apiKeyGenerator";
+
+const KEYCHAIN_SERVICE = "com.ecom:apiKey";
+
+export const saveApiKeySecret = async () => {
+  const existing = await Keychain.getGenericPassword({ service: KEYCHAIN_SERVICE });
+  if (!existing) {
+    const newKey = generateApiKey();
+    await Keychain.setGenericPassword("API_KEY", newKey, {
+      service: KEYCHAIN_SERVICE,
+    });
+  }
+};
+
+export const initApiKey = async () => {
+  try {
+    await saveApiKeySecret();
+  } catch (e) {
+    console.log("Init API Key failed:", e);
+  }
+};
 
 const apiClient = axios.create({
   baseURL: "https://dummyjson.com",
@@ -10,27 +32,25 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   async (config) => {
-    // Check internet
-    const netState = await NetInfo.fetch();
-    if (!netState.isConnected || !netState.isInternetReachable) {
+    const net = await NetInfo.fetch();
+    if (!net.isConnected || !net.isInternetReachable)
       return Promise.reject(new Error("Tidak ada koneksi internet"));
-    }
 
-    // Ambil API Key dari Keychain
     const apiKey = await Keychain.getGenericPassword({
-      service: "com.ecom:apiKey",
+      service: KEYCHAIN_SERVICE,
     });
 
     if (!apiKey) {
-      return Promise.reject({
-        type: "API_KEY_MISSING",
-        message: "API Key tidak ditemukan. Unauthorized.",
-        status: 401,
+      await saveApiKeySecret();
+      const regenerated = await Keychain.getGenericPassword({
+        service: KEYCHAIN_SERVICE,
       });
+
+      config.headers["X-API-Key"] = regenerated?.password || "";
+    } else {
+      config.headers["X-API-Key"] = apiKey.password;
     }
 
-    // Tambahkan ke header
-    config.headers["X-API-Key"] = apiKey.password;
     config.headers["X-Client-Platform"] = "React-Native";
 
     return config;
@@ -38,17 +58,15 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// RESPONSE SIDE
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
-    // Untuk simulasi login
     if (response.config.url?.includes("/auth/login") && response.status === 200) {
-      const modifiedResponse: AxiosResponse = {
+      return {
         ...response,
         data: { success: true, token: "simulated_token_xyz" },
       };
-      return modifiedResponse;
     }
-
     return response;
   },
   (error) => {
@@ -59,7 +77,6 @@ apiClient.interceptors.response.use(
       });
     }
 
-    // Timeout
     if (error.code === "ECONNABORTED") {
       error.message = "Permintaan timeout. Silakan coba lagi.";
     }

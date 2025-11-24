@@ -1,48 +1,40 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  Alert,
-  StyleSheet,
-  ScrollView,
-} from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, ScrollView, ActivityIndicator, Button, Alert, StyleSheet } from "react-native";
+import { useLiveTracking } from "../hooks/useLiveTracking";
 import { useCart } from "../context/CartContext";
 import { useTheme } from "../context/ThemeContext";
 import { processPayment } from "../services/paymentService";
 
-// Fungsi pengganti toLocaleString
-function formatNumber(number?: number | null) {
-  if (number === null || number === undefined || isNaN(number)) return "0";
-  return number.toLocaleString("id-ID"); // otomatis pakai titik sebagai ribuan
-}
-
-
 export default function Checkout() {
+  const { coords, start, stop, isTracking } = useLiveTracking();
   const { cart, clearCart } = useCart();
   const { isDark } = useTheme();
-
-  const [alamat, setAlamat] = useState("");
+  const [loadingLocation, setLoadingLocation] = useState(true);
 
   const total = cart.reduce((a, b) => a + b.price * b.qty, 0);
 
-const handlePay = async () => {
-  if (!alamat.trim()) {
-    return Alert.alert("Alamat wajib diisi!");
-  }
+  useEffect(() => {
+    start();
+    setLoadingLocation(false);
+    return () => stop(); // cleanup
+  }, []);
 
-  await processPayment(total, clearCart);
-};
+  const handlePay = async () => {
+    if (!coords) return Alert.alert("Lokasi belum tersedia!");
+    await processPayment(total, clearCart);
+  };
+
+  const formatNumber = (num?: number | null) => {
+    if (!num || isNaN(num)) return "0";
+    return num.toLocaleString("id-ID");
+  };
 
   return (
     <ScrollView
       style={{ padding: 16, backgroundColor: isDark ? "#111" : "#fff" }}
       contentContainerStyle={{ paddingBottom: 40 }}
     >
-      <Text style={[styles.title, { color: isDark ? "#fff" : "#000" }]}>
-        Checkout
-      </Text>
+      <Text style={[styles.title, { color: isDark ? "#fff" : "#000" }]}>Checkout</Text>
 
       {cart.map((item) => (
         <View key={item.id} style={styles.item}>
@@ -53,21 +45,25 @@ const handlePay = async () => {
         </View>
       ))}
 
-      <TextInput
-        placeholder="Masukkan alamat"
-        placeholderTextColor="#777"
-        style={[styles.input, { borderColor: isDark ? "#555" : "#ccc", color: isDark ? "#fff" : "#000" }]}
-        value={alamat}
-        onChangeText={setAlamat}
-      />
+      {/* Lokasi dari Live Tracking */}
+      <View style={[styles.input, { backgroundColor: isDark ? "#222" : "#f5f5f5" }]}>
+        {loadingLocation ? (
+          <ActivityIndicator size="small" color={isDark ? "#fff" : "#000"} />
+        ) : (
+          <Text style={{ color: isDark ? "#fff" : "#000" }}>
+            {coords
+              ? `Lat: ${coords.latitude.toFixed(5)}, Lon: ${coords.longitude.toFixed(5)}`
+              : "Gagal mengambil lokasi"}
+          </Text>
+        )}
+      </View>
 
       <Text style={[styles.totalText, { color: isDark ? "#fff" : "#000" }]}>
         Total: Rp {formatNumber(total)}
       </Text>
 
-      <Pressable style={styles.payBtn} onPress={handlePay}>
-        <Text style={styles.payText}>Bayar Sekarang</Text>
-      </Pressable>
+      <Button title={isTracking ? "Stop Tracking" : "Mulai Tracking"} onPress={isTracking ? stop : start} />
+      <Button title="Bayar Sekarang" onPress={handlePay} color="#e67e22" />
     </ScrollView>
   );
 }
@@ -75,14 +71,6 @@ const handlePay = async () => {
 const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: "bold", marginBottom: 20 },
   item: { marginBottom: 15 },
-  input: {
-    borderWidth: 1,
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 20,
-    marginBottom: 20,
-  },
+  input: { borderWidth: 1, padding: 12, borderRadius: 8, marginVertical: 20, justifyContent: "center", minHeight: 50 },
   totalText: { fontSize: 20, fontWeight: "bold", marginBottom: 20 },
-  payBtn: { padding: 15, backgroundColor: "#e67e22", borderRadius: 10 },
-  payText: { color: "#fff", textAlign: "center", fontWeight: "bold" },
 });
